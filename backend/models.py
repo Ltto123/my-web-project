@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text
+from datetime import datetime, timezone
+
+from sqlalchemy import Column, Integer, String, Text, DateTime
 from backend.database import Base  # 🌟 引入刚刚洗干净的始祖基类
 
 # 1. 声明用户数据表模型（DAO 层实体）
@@ -19,3 +21,4 @@ class PostModel(Base):
     title = Column(String(150), nullable=False)  # 文章标题，最大 150 字
     content = Column(Text, nullable=False)  # 文章正文，Text 代表超长文本列
     author = Column(String(50), nullable=False)  # 作者署名，直接对应你前端的 "张三"、"李四" 文本
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)  # 发布时间（UTC）

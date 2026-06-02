@@ -1,5 +1,9 @@
+from datetime import datetime, timezone
+from typing import Optional
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
@@ -8,6 +12,29 @@ import backend.models as models
 import backend.schemas as schemas
 
 Base.metadata.create_all(bind=engine)
+
+
+def _ensure_posts_created_at_column():
+    inspector = inspect(engine)
+    if "posts" not in inspector.get_table_names():
+        return
+    column_names = [col["name"] for col in inspector.get_columns("posts")]
+    if "created_at" not in column_names:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN created_at DATETIME"))
+
+
+_ensure_posts_created_at_column()
+
+
+def _utc_iso(dt: Optional[datetime]) -> Optional[str]:
+    """库里的 naive 时间按 UTC 存，返回带时区的 ISO 供前端正确换算本地时间。"""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
 
 app = FastAPI(title="Blog System API")
 
@@ -52,7 +79,8 @@ def get_all_posts(db: Session = Depends(get_db)):
             "id": post.id,
             "title": post.title,
             "content": post.content,
-            "author": post.author
+            "author": post.author,
+            "created_at": _utc_iso(post.created_at),
         } for post in raw_posts
     ]
     return schemas.HttpResponseSchema(code=0, msg="success", data=serialized_posts)
@@ -62,7 +90,8 @@ def create_new_post(payload: schemas.PostCreateSchema, db: Session = Depends(get
     new_post = models.PostModel(
         title=payload.title,
         content=payload.content,
-        author=payload.author
+        author=payload.author,
+        created_at=datetime.now(timezone.utc),
     )
     db.add(new_post)
     db.commit()

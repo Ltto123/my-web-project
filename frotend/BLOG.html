@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ltto的博客</title>
-    <!-- 引入外部样式表 CSS 皮囊 -->
+    <!-- 引入外部样式表 CSS -->
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <!-- 头部导航区：应用 Flexbox 弹性盒子实现两端对齐 -->
+    <!-- 应用 Flexbox 实现两端对齐 -->
     <header class="blog-header">
       <div class="logo">全栈空间</div>
       <!-- 交互开关：一键切换夜间模式 -->
@@ -86,15 +86,11 @@
         </form>
       </section>
       <section class="intro-section">
-        <h1>欢迎来到我的前端实践</h1>
-        <p>
-          本页面完全由 HTML5 语义化骨架 + CSS3 现代盒模型 + 原生 JavaScript
-          异步渲染引擎驱动。
-        </p>
+        <h1>欢迎来到我的博客网站</h1>
+        <p>本页面由 HTML5 + CSS3 + 原生JavaScript构建 后端使用Python编写</p>
       </section>
 
-      <!-- 💡 第一步：无脑套路之“挖坑” -->
-      <!-- 这个大盒子目前内部没有任何 HTML 标签，完全交由 JS 从内存数据中动态引爆渲染 -->
+      <!-- 完全交由 JS 从内存数据中渲染 -->
       <div id="blog-grid" class="blog-grid"></div>
     </main>
 
@@ -103,7 +99,7 @@
       <p>© 2026 全栈深耕计划. Powered by pure Vanilla JS.</p>
     </footer>
 
-    <!-- 引入外部逻辑脚本 JS 大脑（放在身体最底部防止阻塞页面骨架加载） -->
+    <!-- 引入外部逻辑脚本 JS （放在身体最底部防止阻塞页面骨架加载） -->
     <script src="main.js"></script>
   </body>
 </html>

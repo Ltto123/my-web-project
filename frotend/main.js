@@ -1,6 +1,29 @@
 let safeStorage = window.localStorage;
 let blogPosts = [];
 
+function formatPostDate(dateValue) {
+  if (!dateValue) return "未知";
+  let normalized = dateValue;
+  // 后端历史上返回的无时区字符串实际是 UTC，需补上 Z 再解析
+  if (
+    typeof normalized === "string" &&
+    !/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)
+  ) {
+    normalized = normalized.replace(" ", "T") + "Z";
+  }
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return "未知";
+  return parsed.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
 // 从后端拉取全量文章数据
 async function loadPostsFromServer() {
   try {
@@ -33,8 +56,8 @@ function renderBlogGrid() {
             <article class="blog-card" data-id="${post.id}">
                 <h2>${post.title}</h2>
                 <div class="card-meta">
-                    <span>📅 Persistent Data</span>
-                    <span>✍️ Author: ${post.author}</span>
+                    <span>📅 时间: ${formatPostDate(post.created_at)}</span>
+                    <span>✍️ 作者: ${post.author}</span>
                 </div>
                 <p class="card-content">${post.content}</p>
                 <button class="delete-card-btn" data-id="${post.id}">🗑️ 删除博文</button>
@@ -144,7 +167,7 @@ function openDetailModal(post) {
         <div class="custom-modal-content">
             <span class="custom-modal-close">×</span>
             <h1 class="modal-title">${post.title}</h1>
-            <div class="modal-meta">✍️ Author: ${post.author}  |  🛡️ ID: ${post.id}</div>
+            <div class="modal-meta">📅 ${formatPostDate(post.created_at)}  |  ✍️ 作者: ${post.author}  |  🛡️ ID: ${post.id}</div>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
             <div class="modal-body-text">${post.content.replace(/\n/g, "<br>")}</div>
         </div>
