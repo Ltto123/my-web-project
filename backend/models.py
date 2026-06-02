@@ -1,24 +1,46 @@
-from datetime import datetime, timezone
-
-from sqlalchemy import Column, Integer, String, Text, DateTime
-from backend.database import Base  # 🌟 引入刚刚洗干净的始祖基类
-
-# 1. 声明用户数据表模型（DAO 层实体）
-class UserModel(Base):
-    __tablename__ = "users"  # 焊死在 SQLite 硬盘里的真实表名
-
-    id = Column(Integer, primary_key=True, index=True)  # 主键身份证，自动递增且建立极速索引
-    username = Column(String(50), unique=True, nullable=False, index=True)  # 用户名唯一，建立索引加速登录查询
-    email = Column(String(100), unique=True, nullable=False, index=True)  # 邮箱唯一，海关严查
-    password_hash = Column(String(255), nullable=False)  # 绝对不存明文！专门存放加盐打散后的安全乱码
-
-
-# 2. 声明博客文章数据表模型（DAO 层实体）
-class PostModel(Base):
-    __tablename__ = "posts"  # 焊死在 SQLite 硬盘里的真实表名
-
-    id = Column(Integer, primary_key=True, index=True)  # 文章唯一数字身份证
-    title = Column(String(150), nullable=False)  # 文章标题，最大 150 字
-    content = Column(Text, nullable=False)  # 文章正文，Text 代表超长文本列
-    author = Column(String(50), nullable=False)  # 作者署名，直接对应你前端的 "张三"、"李四" 文本
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)  # 发布时间（UTC）
+from datetime import datetime, timezone
+
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint
+from backend.database import Base
+
+
+class UserModel(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(100), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+
+
+class PostModel(Base):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(150), nullable=False)
+    content = Column(Text, nullable=False)
+    author = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+
+class LikeModel(Base):
+    __tablename__ = "likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+    __table_args__ = (UniqueConstraint("post_id", "user_id", name="uq_post_user_like"),)
+
+
+class CommentModel(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    author = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
