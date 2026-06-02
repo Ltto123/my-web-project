@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 from typing import Any, Optional
 
 # ==========================================================================
@@ -14,11 +14,17 @@ class HttpResponseSchema(BaseModel):
 # ==========================================================================
 class UserRegisterSchema(BaseModel):
     username: str = Field(..., min_length=3, max_length=20, description="用户名")
-    email: EmailStr = Field(..., description="注册邮箱")
     password: str = Field(..., min_length=6, description="明文密码")
 
 # ==========================================================================
-# 3. 入关验证 DTO：规范前端点击“立即发布文章”时，必须快递过来什么
+# 4. 入关验证 DTO：规范用户点击“登录”时，前端必须快递过来什么数据
+# ==========================================================================
+class UserLoginSchema(BaseModel):
+    username: str = Field(..., description="用户名")
+    password: str = Field(..., description="明文密码")
+
+# ==========================================================================
+# 5. 入关验证 DTO：规范前端点击“立即发布文章”时，必须快递过来什么
 # ==========================================================================
 class PostCreateSchema(BaseModel):
     title: str = Field(..., description="文章标题")

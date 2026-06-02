@@ -1,15 +1,19 @@
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
-
+import bcrypt
 from backend.database import engine, Base, get_db
 import backend.models as models
 import backend.schemas as schemas
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frotend"
 
 Base.metadata.create_all(bind=engine)
 
@@ -41,33 +45,59 @@ app = FastAPI(title="Blog System API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
+
+
+def hash_password(password: str) -> str:    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 @app.post("/api/v1/auth/register", response_model=schemas.HttpResponseSchema)
 def register_user(payload: schemas.UserRegisterSchema, db: Session = Depends(get_db)):
     existing_user = db.query(models.UserModel).filter(
-        (models.UserModel.username == payload.username) | 
-        (models.UserModel.email == payload.email)
+        models.UserModel.username == payload.username
     ).first()
-    
+
     if existing_user:
-        return schemas.HttpResponseSchema(code=10002, msg="Username or email already registered", data=None)
-    
-    safe_password_hash = pwd_context.hash(payload.password)
+        return schemas.HttpResponseSchema(code=10002, msg="用户名已被注册", data=None)
+
+    safe_password_hash = hash_password(payload.password)
     new_user = models.UserModel(
         username=payload.username,
-        email=payload.email,
-        password_hash=safe_password_hash
+        email=f"{payload.username}@local",
+        password_hash=safe_password_hash,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return schemas.HttpResponseSchema(code=0, msg="Registration successful", data={"user_id": new_user.id})
+    return schemas.HttpResponseSchema(code=0, msg="注册成功", data={"user_id": new_user.id})
+
+
+@app.post("/api/v1/auth/login", response_model=schemas.HttpResponseSchema)
+def login_user(payload: schemas.UserLoginSchema, db: Session = Depends(get_db)):
+    # 1. 顺着用户名搜寻用户
+    user = db.query(models.UserModel).filter(models.UserModel.username == payload.username).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10003, msg="用户不存在", data=None)
+        
+    # 2. 验证明文密码与数据库哈希密码是否匹配
+    is_password_correct = verify_password(payload.password, user.password_hash)
+    if not is_password_correct:
+        return schemas.HttpResponseSchema(code=10004, msg="密码错误", data=None)
+        
+    # 3. 验证通过，返回标准的成功响应并附带用户信息
+    return schemas.HttpResponseSchema(
+        code=0, 
+        msg="登录成功", 
+        data={"user_id": user.id, "username": user.username}
+    )
 
 @app.get("/api/v1/posts", response_model=schemas.HttpResponseSchema)
 def get_all_posts(db: Session = Depends(get_db)):
@@ -112,3 +142,11 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 @app.get("/api/v1/health")
 def health_check():
     return {"code": 0, "msg": "success", "data": "healthy"}
+
+
+@app.get("/")
+def serve_blog():
+    return FileResponse(FRONTEND_DIR / "BLOG.html")
+
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")

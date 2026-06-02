@@ -11,79 +11,63 @@
     <!-- 应用 Flexbox 实现两端对齐 -->
     <header class="blog-header">
       <div class="logo">全栈空间</div>
-      <!-- 交互开关：一键切换夜间模式 -->
-      <button id="theme-btn" class="toggle-btn">切换主题</button>
+      <div class="header-actions">
+        <div id="auth-user-area" class="auth-user-area hidden">
+          <span id="auth-welcome" class="auth-welcome"></span>
+          <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">
+            退出登录
+          </button>
+        </div>
+        <div id="auth-guest-area" class="auth-guest-area">
+          <button id="login-open-btn" class="toggle-btn toggle-btn-outline" type="button">
+            登录
+          </button>
+          <button id="register-open-btn" class="toggle-btn" type="button">注册</button>
+        </div>
+        <button id="theme-btn" class="toggle-btn" type="button">切换主题</button>
+      </div>
     </header>
 
     <!-- 主体内容区 -->
     <main class="blog-layout">
-      <section
-        class="publish-form-container"
-        style="
-          background: white;
-          padding: 25px;
-          border-radius: 12px;
-          margin-bottom: 40px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <h3 style="margin-bottom: 15px; color: #1a73e8">✍️ 撰写新博文</h3>
+      <section id="publish-section" class="publish-form-container hidden">
+        <h3 class="publish-form-title">✍️ 撰写新博文</h3>
         <form id="post-form">
-          <div style="margin-bottom: 15px">
+          <div class="form-field">
             <input
               type="text"
               id="post-title"
               placeholder="请输入文章标题..."
               required
-              style="
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                outline: none;
-              "
+              class="form-input"
             />
           </div>
-          <div style="margin-bottom: 15px">
+          <div class="form-field">
             <input
               type="text"
               id="post-author"
               placeholder="作者署名..."
               required
-              style="
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                outline: none;
-              "
+              class="form-input"
+              readonly
             />
           </div>
-          <div style="margin-bottom: 15px">
+          <div class="form-field">
             <textarea
               id="post-content"
               placeholder="在此输入正文内容..."
               required
               rows="4"
-              style="
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                outline: none;
-                resize: vertical;
-                font-family: inherit;
-              "
+              class="form-input form-textarea"
             ></textarea>
           </div>
-          <button
-            type="submit"
-            class="toggle-btn"
-            style="border-radius: 6px; width: 100%"
-          >
-            立即发布文章
-          </button>
+          <button type="submit" class="toggle-btn form-submit-btn">立即发布文章</button>
         </form>
+      </section>
+
+      <section id="login-prompt-section" class="login-prompt-container">
+        <p>登录后即可撰写和删除博文</p>
+        <button id="login-prompt-btn" class="toggle-btn" type="button">立即登录</button>
       </section>
       <section class="intro-section">
         <h1>欢迎来到我的博客网站</h1>
@@ -98,6 +82,77 @@
     <footer class="blog-footer">
       <p>© 2026 全栈深耕计划. Powered by pure Vanilla JS.</p>
     </footer>
+
+    <!-- 登录 / 注册弹窗 -->
+    <div id="auth-modal" class="auth-modal-overlay hidden">
+      <div class="auth-modal-content">
+        <span id="auth-modal-close" class="custom-modal-close">×</span>
+        <div class="auth-tabs">
+          <button id="auth-tab-login" class="auth-tab active" type="button" data-tab="login">
+            登录
+          </button>
+          <button id="auth-tab-register" class="auth-tab" type="button" data-tab="register">
+            注册
+          </button>
+        </div>
+
+        <form id="login-form" class="auth-form">
+          <div class="form-field">
+            <label for="login-username">用户名</label>
+            <input
+              type="text"
+              id="login-username"
+              placeholder="请输入用户名"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
+          </div>
+          <div class="form-field">
+            <label for="login-password">密码</label>
+            <input
+              type="password"
+              id="login-password"
+              placeholder="请输入密码"
+              required
+              minlength="6"
+              class="form-input"
+            />
+          </div>
+          <p id="login-error" class="auth-error hidden"></p>
+          <button type="submit" class="toggle-btn form-submit-btn">登录</button>
+        </form>
+
+        <form id="register-form" class="auth-form hidden">
+          <div class="form-field">
+            <label for="register-username">用户名</label>
+            <input
+              type="text"
+              id="register-username"
+              placeholder="3-20 个字符"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
+          </div>
+          <div class="form-field">
+            <label for="register-password">密码</label>
+            <input
+              type="password"
+              id="register-password"
+              placeholder="至少 6 位"
+              required
+              minlength="6"
+              class="form-input"
+            />
+          </div>
+          <p id="register-error" class="auth-error hidden"></p>
+          <button type="submit" class="toggle-btn form-submit-btn">注册</button>
+        </form>
+      </div>
+    </div>
 
     <!-- 引入外部逻辑脚本 JS （放在身体最底部防止阻塞页面骨架加载） -->
     <script src="main.js"></script>
