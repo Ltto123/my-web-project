@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ltto的博客</title>
+    <!-- 引入外部样式表 CSS 皮囊 -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- 头部导航区：应用 Flexbox 弹性盒子实现两端对齐 -->
+    <header class="blog-header">
+      <div class="logo">全栈空间</div>
+      <!-- 交互开关：一键切换夜间模式 -->
+      <button id="theme-btn" class="toggle-btn">切换主题</button>
+    </header>
+
+    <!-- 主体内容区 -->
+    <main class="blog-layout">
+      <section
+        class="publish-form-container"
+        style="
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          margin-bottom: 40px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        "
+      >
+        <h3 style="margin-bottom: 15px; color: #1a73e8">✍️ 撰写新博文</h3>
+        <form id="post-form">
+          <div style="margin-bottom: 15px">
+            <input
+              type="text"
+              id="post-title"
+              placeholder="请输入文章标题..."
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                outline: none;
+              "
+            />
+          </div>
+          <div style="margin-bottom: 15px">
+            <input
+              type="text"
+              id="post-author"
+              placeholder="作者署名..."
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                outline: none;
+              "
+            />
+          </div>
+          <div style="margin-bottom: 15px">
+            <textarea
+              id="post-content"
+              placeholder="在此输入正文内容..."
+              required
+              rows="4"
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                outline: none;
+                resize: vertical;
+                font-family: inherit;
+              "
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="toggle-btn"
+            style="border-radius: 6px; width: 100%"
+          >
+            立即发布文章
+          </button>
+        </form>
+      </section>
+      <section class="intro-section">
+        <h1>欢迎来到我的前端实践</h1>
+        <p>
+          本页面完全由 HTML5 语义化骨架 + CSS3 现代盒模型 + 原生 JavaScript
+          异步渲染引擎驱动。
+        </p>
+      </section>
+
+      <!-- 💡 第一步：无脑套路之“挖坑” -->
+      <!-- 这个大盒子目前内部没有任何 HTML 标签，完全交由 JS 从内存数据中动态引爆渲染 -->
+      <div id="blog-grid" class="blog-grid"></div>
+    </main>
+
+    <!-- 页脚区 -->
+    <footer class="blog-footer">
+      <p>© 2026 全栈深耕计划. Powered by pure Vanilla JS.</p>
+    </footer>
+
+    <!-- 引入外部逻辑脚本 JS 大脑（放在身体最底部防止阻塞页面骨架加载） -->
+    <script src="main.js"></script>
+  </body>
+</html>
