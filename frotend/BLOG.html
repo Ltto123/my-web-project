@@ -74,6 +74,17 @@
         <p>本页面由 HTML5 + CSS3 + 原生JavaScript构建 后端使用Python编写</p>
       </section>
 
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="搜索文章标题或内容..."
+        />
+        <button id="search-btn" class="toggle-btn search-btn" type="button">搜索</button>
+      </div>
+
       <!-- 完全交由 JS 从内存数据中渲染 -->
       <div id="blog-grid" class="blog-grid"></div>
     </main>

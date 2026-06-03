@@ -1,5 +1,29 @@
+# --- Python / venv ---
 .venv/
 __pycache__/
+*.pyc
+*.pyo
+
+# --- Database ---
 *.db
+
+# --- Environment ---
 .env
+
+# --- OS junk ---
 .DS_Store
+Thumbs.db
+
+# --- Clipboard / temp images ---
+clipboard_image.png
+clip_small.jpg
+clip_tiny.png
+*.ps1
+
+# --- IDE & Claude ---
+.idea/
+.vscode/
+.claude/
+
+# --- Dev scripts (keep only project source) ---
+clip

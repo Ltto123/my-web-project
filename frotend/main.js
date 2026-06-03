@@ -52,8 +52,12 @@ function isLoggedIn() {
   return Boolean(currentUser && currentUser.user_id);
 }
 
-function postsQueryParam() {
-  return isLoggedIn() ? `?user_id=${currentUser.user_id}` : "";
+function postsQueryParam(extraParams = "") {
+  const base = isLoggedIn() ? `?user_id=${currentUser.user_id}` : "";
+  if (extraParams) {
+    return base ? `${base}&${extraParams}` : `?${extraParams}`;
+  }
+  return base;
 }
 
 function formatPostDate(dateValue) {
@@ -219,10 +223,12 @@ async function registerUser(username, password) {
   return response.json();
 }
 
-async function loadPostsFromServer() {
+async function loadPostsFromServer(searchTerm = "") {
   try {
+    const trimmed = searchTerm.trim();
+    const params = trimmed ? `search=${encodeURIComponent(trimmed)}` : "";
     const response = await fetch(
-      `${API_BASE}/api/v1/posts${postsQueryParam()}`,
+      `${API_BASE}/api/v1/posts${postsQueryParam(params)}`,
     );
 
     const result = await response.json();
@@ -558,6 +564,33 @@ function initInteractions() {
         alert("无法连接服务器。");
       }
     });
+
+  // 搜索功能事件绑定
+  const searchInput = document.querySelector("#search-input");
+  const searchBtn = document.querySelector("#search-btn");
+  let isSearchActive = false;
+
+  function executeSearch() {
+    isSearchActive = true;
+    loadPostsFromServer(searchInput.value);
+  }
+
+  searchBtn?.addEventListener("click", executeSearch);
+
+  searchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      executeSearch();
+    }
+  });
+
+  // 输入框清空时自动恢复全部文章列表（仅在之前有搜索时才触发，避免无意义请求）
+  searchInput?.addEventListener("input", () => {
+    if (!searchInput.value.trim() && isSearchActive) {
+      isSearchActive = false;
+      loadPostsFromServer();
+    }
+  });
 }
 
 async function openDetailModal(postId) {

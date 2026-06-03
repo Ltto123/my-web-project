@@ -1,10 +1,8 @@
 from datetime import datetime, timezone
 
-from pathlib import Path
-
 from typing import Optional
 
-
+from pathlib import Path
 
 from fastapi import FastAPI, Depends, Query
 
@@ -290,11 +288,24 @@ def get_all_posts(
 
     user_id: Optional[int] = Query(None),
 
+    search: Optional[str] = Query(None, description="搜索文章标题或内容"),
+
     db: Session = Depends(get_db),
 
 ):
 
-    raw_posts = db.query(models.PostModel).order_by(models.PostModel.id.desc()).all()
+    query = db.query(models.PostModel).order_by(models.PostModel.id.desc())
+
+    # 搜索功能：对标题和内容做模糊匹配
+    if search and (keyword := search.strip()):
+        # 转义 LIKE 通配符，防止用户输入的 % 和 _ 被误解析
+        safe_keyword = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.filter(
+            models.PostModel.title.contains(safe_keyword, escape="\\") |
+            models.PostModel.content.contains(safe_keyword, escape="\\")
+        )
+
+    raw_posts = query.all()
 
     serialized_posts = [_serialize_post(db, post, user_id) for post in raw_posts]
 
