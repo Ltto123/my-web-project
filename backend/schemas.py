@@ -32,3 +32,6 @@ class CommentCreateSchema(BaseModel):
     user_id: int = Field(..., description="当前登录用户 ID")
     content: str = Field(..., min_length=1, max_length=500, description="评论内容")
 
+
+class PersonalPostCreateSchema(BaseModel):
+    content: str = Field(..., min_length=1, description="个人内容正文")

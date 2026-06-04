@@ -2,7 +2,13 @@ from datetime import datetime, timezone
 
 from typing import Optional
 
+import os
+
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI, Depends, Query
 
@@ -186,6 +192,19 @@ def _serialize_comment(comment: models.CommentModel) -> dict:
 
 
 
+
+
+BLOG_OWNER_USERNAME = os.getenv("BLOG_OWNER_USERNAME", "").strip()
+
+if not BLOG_OWNER_USERNAME:
+    print("⚠ 警告：未设置 BLOG_OWNER_USERNAME 环境变量，无人拥有博主权限")
+
+
+def _is_blog_owner(user: Optional[models.UserModel]) -> bool:
+    """判断当前登录用户是否为博主"""
+    if not BLOG_OWNER_USERNAME or not user:
+        return False
+    return user.username == BLOG_OWNER_USERNAME
 
 
 app = FastAPI(title="Blog System API")
@@ -583,6 +602,89 @@ def create_post_comment(
 
 
 
+def _serialize_personal_post(post: models.PersonalPostModel) -> dict:
+    return {
+        "id": post.id,
+        "content": post.content,
+        "author": post.author,
+        "created_at": _utc_iso(post.created_at),
+    }
+
+
+@app.get("/api/v1/personal", response_model=schemas.HttpResponseSchema)
+def get_personal_posts(db: Session = Depends(get_db)):
+    posts = (
+        db.query(models.PersonalPostModel)
+        .order_by(models.PersonalPostModel.id.desc())
+        .all()
+    )
+    return schemas.HttpResponseSchema(
+        code=0,
+        msg="success",
+        data=[_serialize_personal_post(p) for p in posts],
+    )
+
+
+@app.post("/api/v1/personal", response_model=schemas.HttpResponseSchema)
+def create_personal_post(
+    payload: schemas.PersonalPostCreateSchema,
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+
+    if not _is_blog_owner(user):
+        return schemas.HttpResponseSchema(code=403, msg="仅博主可发布个人内容", data=None)
+
+    content = payload.content.strip()
+    if not content:
+        return schemas.HttpResponseSchema(code=400, msg="内容不能为空", data=None)
+
+    new_post = models.PersonalPostModel(
+        content=content,
+        author=user.username,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    return schemas.HttpResponseSchema(
+        code=0,
+        msg="发布成功",
+        data=_serialize_personal_post(new_post),
+    )
+
+
+@app.delete("/api/v1/personal/{post_id}", response_model=schemas.HttpResponseSchema)
+def delete_personal_post(
+    post_id: int,
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+
+    if not _is_blog_owner(user):
+        return schemas.HttpResponseSchema(code=403, msg="仅博主可删除个人内容", data=None)
+
+    post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
+    if not post:
+        return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
+
+    db.delete(post)
+    db.commit()
+    return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
+
+
 @app.get("/api/v1/health")
 
 def health_check():
@@ -600,7 +702,9 @@ def serve_blog():
     return FileResponse(FRONTEND_DIR / "BLOG.html")
 
 
-
+@app.get("/personal")
+def serve_personal():
+    return FileResponse(FRONTEND_DIR / "personal.html")
 
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
