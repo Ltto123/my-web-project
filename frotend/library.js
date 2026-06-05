@@ -9,6 +9,7 @@ let safeStorage = window.localStorage;
 let resources = [];
 let currentUser = null;
 let currentCategory = "";
+let ownerUsername = "";
 
 function escapeHtml(text) {
   return String(text)
@@ -40,6 +41,10 @@ function clearUserSession() {
 
 function isLoggedIn() {
   return Boolean(currentUser && currentUser.user_id);
+}
+
+function isOwner() {
+  return isLoggedIn() && ownerUsername && currentUser.username === ownerUsername;
 }
 
 function formatPostDate(dateValue) {
@@ -92,7 +97,7 @@ function renderResourceList() {
   let html = "";
   for (const r of resources) {
     const badgeColor = categoryColors[r.category] || "#6b7280";
-    const deleteBtnHtml = isLoggedIn()
+    const deleteBtnHtml = isOwner()
       ? `<button class="delete-card-btn" data-id="${r.id}">🗑️ 删除</button>`
       : "";
 
@@ -131,10 +136,9 @@ function initCategoryBar() {
   });
 }
 
-/* ========== 上传 ========== */
+/* ========== 上传（仅博主） ========== */
 
 async function uploadResourceFile(file) {
-  if (!isLoggedIn()) throw new Error("请先登录");
   const formData = new FormData();
   formData.append("file", file);
   const response = await fetch(`${API_BASE}/api/v1/upload?user_id=${currentUser.user_id}`, {
@@ -179,26 +183,24 @@ async function submitResource(form) {
   }
 }
 
-/* ========== Auth ========== */
+/* ========== Auth UI ========== */
 
 function updateAuthUI() {
   const userArea = document.querySelector("#auth-user-area");
   const guestArea = document.querySelector("#auth-guest-area");
   const welcomeEl = document.querySelector("#auth-welcome");
   const uploadSection = document.querySelector("#upload-section");
-  const loginPrompt = document.querySelector("#login-prompt-section");
 
   if (isLoggedIn()) {
     userArea?.classList.remove("hidden");
     guestArea?.classList.add("hidden");
-    uploadSection?.classList.remove("hidden");
-    loginPrompt?.classList.add("hidden");
     if (welcomeEl) welcomeEl.textContent = `欢迎，${currentUser.username}`;
+    // 只有博主能看到上传表单
+    uploadSection?.classList.toggle("hidden", !isOwner());
   } else {
     userArea?.classList.add("hidden");
     guestArea?.classList.remove("hidden");
     uploadSection?.classList.add("hidden");
-    loginPrompt?.classList.remove("hidden");
   }
   loadResources(currentCategory);
 }
@@ -208,12 +210,14 @@ function openAuthModal(tab = "login") {
   switchAuthTab(tab);
   clearAuthErrors();
 }
+
 function closeAuthModal() {
   document.querySelector("#auth-modal")?.classList.add("hidden");
   document.querySelector("#login-form")?.reset();
   document.querySelector("#register-form")?.reset();
   clearAuthErrors();
 }
+
 function switchAuthTab(tab) {
   const isLogin = tab === "login";
   document.querySelector("#auth-tab-login")?.classList.toggle("active", isLogin);
@@ -222,12 +226,14 @@ function switchAuthTab(tab) {
   document.querySelector("#register-form")?.classList.toggle("hidden", isLogin);
   clearAuthErrors();
 }
+
 function clearAuthErrors() {
   for (const id of ["login-error", "register-error"]) {
     const el = document.querySelector(`#${id}`);
     if (el) { el.textContent = ""; el.classList.add("hidden"); }
   }
 }
+
 function showAuthError(formType, message) {
   const el = document.querySelector(`#${formType}-error`);
   if (el) { el.textContent = message; el.classList.remove("hidden"); }
@@ -240,6 +246,7 @@ async function loginUser(username, password) {
   });
   return r.json();
 }
+
 async function registerUser(username, password) {
   const r = await fetch(`${API_BASE}/api/v1/auth/register`, {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -251,7 +258,6 @@ async function registerUser(username, password) {
 function initAuthInteractions() {
   document.querySelector("#login-open-btn")?.addEventListener("click", () => openAuthModal("login"));
   document.querySelector("#register-open-btn")?.addEventListener("click", () => openAuthModal("register"));
-  document.querySelector("#login-prompt-btn")?.addEventListener("click", () => openAuthModal("login"));
   document.querySelector("#auth-modal-close")?.addEventListener("click", closeAuthModal);
   document.querySelector("#auth-modal")?.addEventListener("click", (e) => { if (e.target.id === "auth-modal") closeAuthModal(); });
   document.querySelector("#logout-btn")?.addEventListener("click", () => { clearUserSession(); updateAuthUI(); });
@@ -291,14 +297,14 @@ function initInteractions() {
 
   document.querySelector("#resource-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+    if (!isOwner()) return;
     await submitResource(e.target);
   });
 
   document.querySelector("#resource-list")?.addEventListener("click", async (e) => {
     if (e.target.classList.contains("delete-card-btn")) {
       e.stopPropagation();
-      if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+      if (!isOwner()) return;
       const id = e.target.getAttribute("data-id");
       if (!confirm("确定删除？")) return;
       try {
@@ -311,8 +317,25 @@ function initInteractions() {
   });
 }
 
-loadUserSession();
-initAuthInteractions();
-initCategoryBar();
-initInteractions();
-updateAuthUI();
+async function loadSiteConfig() {
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/site-config`);
+    const result = await response.json();
+    if (result.code === 0 && result.data) {
+      ownerUsername = result.data.owner_username || "";
+    }
+  } catch (e) {
+    console.error("加载站点配置失败:", e);
+  }
+}
+
+async function init() {
+  loadUserSession();
+  initAuthInteractions();
+  initCategoryBar();
+  initInteractions();
+  await loadSiteConfig();
+  updateAuthUI();
+}
+
+init();

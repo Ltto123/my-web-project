@@ -859,6 +859,15 @@ def delete_resource(
     return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
 
 
+@app.get("/api/v1/site-config")
+def site_config():
+    return schemas.HttpResponseSchema(
+        code=0,
+        msg="success",
+        data={"owner_username": BLOG_OWNER_USERNAME or None},
+    )
+
+
 @app.get("/api/v1/health")
 
 def health_check():

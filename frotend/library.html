@@ -10,64 +10,114 @@
     <header class="blog-header">
       <div class="logo">📚 资源库</div>
       <div class="header-actions">
-        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
-        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
+        <a
+          href="/"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >← 博客</a
+        >
+        <a
+          href="/personal"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >👤 个人主页</a
+        >
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
-          <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">退出登录</button>
+          <button
+            id="logout-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
+            退出登录
+          </button>
         </div>
         <div id="auth-guest-area" class="auth-guest-area">
-          <button id="login-open-btn" class="toggle-btn toggle-btn-outline" type="button">登录</button>
-          <button id="register-open-btn" class="toggle-btn" type="button">注册</button>
+          <button
+            id="login-open-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
+            登录
+          </button>
+          <button id="register-open-btn" class="toggle-btn" type="button">
+            注册
+          </button>
         </div>
-        <button id="theme-btn" class="toggle-btn" type="button">切换主题</button>
+        <button id="theme-btn" class="toggle-btn" type="button">
+          切换主题
+        </button>
       </div>
     </header>
 
-    <main class="blog-layout">
-      <!-- 上传表单：仅博主可见 -->
-      <section id="upload-section" class="publish-form-container hidden">
-        <h3 class="publish-form-title">📤 上传资源</h3>
-        <form id="resource-form">
-          <div class="form-field">
-            <input type="text" id="resource-title" placeholder="资源标题..." required class="form-input" />
-          </div>
-          <div class="form-field">
-            <textarea id="resource-desc" placeholder="资源描述（可选）..." rows="2" class="form-input form-textarea"></textarea>
-          </div>
-          <div class="form-field">
-            <select id="resource-category" class="form-input">
-              <option value="">选择分类</option>
-              <option value="PPT">PPT</option>
-              <option value="课件">课件</option>
-              <option value="学习笔记">学习笔记</option>
-              <option value="电子书">电子书</option>
-              <option value="其他">其他</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <input type="file" id="resource-file" required class="form-input" />
-          </div>
-          <button type="submit" class="toggle-btn form-submit-btn">上传资源</button>
-        </form>
-      </section>
+    <main class="library-layout">
+      <aside class="library-sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-crown">👑</div>
+          <div class="sidebar-title">王的宝库</div>
+          <div class="sidebar-line"></div>
+          <div class="sidebar-sub">资源珍藏</div>
+        </div>
+      </aside>
+      <div class="library-main">
+        <!-- 上传表单：仅博主可见 -->
+        <section id="upload-section" class="publish-form-container hidden">
+          <h3 class="publish-form-title">📤 上传资源</h3>
+          <form id="resource-form">
+            <div class="form-field">
+              <input
+                type="text"
+                id="resource-title"
+                placeholder="资源标题..."
+                required
+                class="form-input"
+              />
+            </div>
+            <div class="form-field">
+              <textarea
+                id="resource-desc"
+                placeholder="资源描述（可选）..."
+                rows="2"
+                class="form-input form-textarea"
+              ></textarea>
+            </div>
+            <div class="form-field">
+              <select id="resource-category" class="form-input">
+                <option value="">选择分类</option>
+                <option value="PPT">PPT</option>
+                <option value="课件">课件</option>
+                <option value="学习笔记">学习笔记</option>
+                <option value="电子书">电子书</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <input
+                type="file"
+                id="resource-file"
+                required
+                class="form-input"
+              />
+            </div>
+            <button type="submit" class="toggle-btn form-submit-btn">
+              上传资源
+            </button>
+          </form>
+        </section>
 
-      <section id="login-prompt-section" class="login-prompt-container">
-        <p>登录后即可上传资源</p>
-        <button id="login-prompt-btn" class="toggle-btn" type="button">立即登录</button>
-      </section>
+        <!-- 分类筛选 -->
+        <div class="category-bar">
+          <button class="cat-btn active" data-cat="">全部</button>
+          <button class="cat-btn" data-cat="PPT">PPT</button>
+          <button class="cat-btn" data-cat="课件">课件</button>
+          <button class="cat-btn" data-cat="学习笔记">学习笔记</button>
+          <button class="cat-btn" data-cat="电子书">电子书</button>
+          <button class="cat-btn" data-cat="其他">其他</button>
+        </div>
 
-      <!-- 分类筛选 -->
-      <div class="category-bar">
-        <button class="cat-btn active" data-cat="">全部</button>
-        <button class="cat-btn" data-cat="PPT">PPT</button>
-        <button class="cat-btn" data-cat="课件">课件</button>
-        <button class="cat-btn" data-cat="学习笔记">学习笔记</button>
-        <button class="cat-btn" data-cat="电子书">电子书</button>
-        <button class="cat-btn" data-cat="其他">其他</button>
+        <div id="resource-list" class="blog-grid"></div>
       </div>
-
-      <div id="resource-list" class="blog-grid"></div>
+      <!-- .library-main -->
     </main>
 
     <footer class="blog-footer">
@@ -79,17 +129,46 @@
       <div class="auth-modal-content">
         <span id="auth-modal-close" class="custom-modal-close">×</span>
         <div class="auth-tabs">
-          <button id="auth-tab-login" class="auth-tab active" type="button" data-tab="login">登录</button>
-          <button id="auth-tab-register" class="auth-tab" type="button" data-tab="register">注册</button>
+          <button
+            id="auth-tab-login"
+            class="auth-tab active"
+            type="button"
+            data-tab="login"
+          >
+            登录
+          </button>
+          <button
+            id="auth-tab-register"
+            class="auth-tab"
+            type="button"
+            data-tab="register"
+          >
+            注册
+          </button>
         </div>
         <form id="login-form" class="auth-form">
           <div class="form-field">
             <label for="login-username">用户名</label>
-            <input type="text" id="login-username" placeholder="请输入用户名" required minlength="3" maxlength="20" class="form-input" />
+            <input
+              type="text"
+              id="login-username"
+              placeholder="请输入用户名"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
           </div>
           <div class="form-field">
             <label for="login-password">密码</label>
-            <input type="password" id="login-password" placeholder="请输入密码" required minlength="6" class="form-input" />
+            <input
+              type="password"
+              id="login-password"
+              placeholder="请输入密码"
+              required
+              minlength="6"
+              class="form-input"
+            />
           </div>
           <p id="login-error" class="auth-error hidden"></p>
           <button type="submit" class="toggle-btn form-submit-btn">登录</button>
@@ -97,11 +176,26 @@
         <form id="register-form" class="auth-form hidden">
           <div class="form-field">
             <label for="register-username">用户名</label>
-            <input type="text" id="register-username" placeholder="3-20 个字符" required minlength="3" maxlength="20" class="form-input" />
+            <input
+              type="text"
+              id="register-username"
+              placeholder="3-20 个字符"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
           </div>
           <div class="form-field">
             <label for="register-password">密码</label>
-            <input type="password" id="register-password" placeholder="至少 6 位" required minlength="6" class="form-input" />
+            <input
+              type="password"
+              id="register-password"
+              placeholder="至少 6 位"
+              required
+              minlength="6"
+              class="form-input"
+            />
           </div>
           <p id="register-error" class="auth-error hidden"></p>
           <button type="submit" class="toggle-btn form-submit-btn">注册</button>

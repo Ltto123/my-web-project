@@ -677,7 +677,6 @@ body.dark-theme .auth-tab.active {
   font-size: 14px;
 }
 
-
 /* 个人主页 - 图片网格 */
 .image-grid {
   display: flex;
@@ -744,7 +743,6 @@ body.dark-theme .file-link:hover {
   color: #64748b;
 }
 
-
 /* 资源库 - 分类筛选栏 */
 .category-bar {
   display: flex;
@@ -789,4 +787,132 @@ body.dark-theme .cat-btn.active {
 
 .resource-card h2 {
   margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   资源库双栏布局 + 品牌区
+   ========================================================================== */
+
+.library-layout {
+  display: flex;
+  min-height: calc(100vh - 160px);
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 0;
+}
+
+/* 左侧品牌栏 */
+.library-sidebar {
+  width: 250px;
+  min-width: 250px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  border-right: 2px solid #c9a84c;
+}
+
+.sidebar-brand {
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.sidebar-crown {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.6));
+}
+
+.sidebar-title {
+  font-size: 36px;
+  font-weight: 900;
+  color: #c9a84c;
+  letter-spacing: 12px;
+  text-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+  margin-bottom: 20px;
+  font-family: "KaiTi", "楷体", "STKaiti", serif;
+}
+
+.sidebar-line {
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(180deg, transparent, #c9a84c, transparent);
+  margin: 0 auto 20px;
+}
+
+.sidebar-sub {
+  font-size: 14px;
+  color: #8b8559;
+  letter-spacing: 6px;
+  font-family: "KaiTi", "楷体", "STKaiti", serif;
+}
+
+/* 右侧内容区 */
+.library-main {
+  flex: 1;
+  padding: 30px 30px;
+  overflow-y: auto;
+}
+
+/* 暗黑模式 */
+body.dark-theme .library-sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f6db 50%, #e5fac5 100%);
+  border-right-color: #8b6914;
+}
+
+body.dark-theme .sidebar-title {
+  color: #d4af37;
+}
+
+body.dark-theme .sidebar-sub {
+  color: #b8a86a;
+}
+
+body.dark-theme .sidebar-crown {
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.7));
+}
+
+body.dark-theme .sidebar-line {
+  background: linear-gradient(180deg, transparent, #8b6914, transparent);
+}
+
+/* 响应式：窄屏 */
+@media (max-width: 768px) {
+  .library-layout {
+    flex-direction: column;
+  }
+
+  .library-sidebar {
+    width: 100%;
+    min-width: 100%;
+    padding: 20px;
+    border-right: none;
+    border-bottom: 2px solid #c9a84c;
+  }
+
+  .sidebar-brand {
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+  }
+
+  .sidebar-title {
+    font-size: 28px;
+    letter-spacing: 8px;
+  }
+
+  .sidebar-crown {
+    font-size: 32px;
+  }
+
+  .sidebar-line {
+    width: 80px;
+    height: 2px;
+    margin: 12px auto;
+  }
+
+  .library-main {
+    padding: 20px;
+  }
 }
