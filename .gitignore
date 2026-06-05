@@ -11,6 +11,7 @@
 *.pyc
 *.pyo
 .claude/
+openspec/
 .DS_Store
 .env
 .idea/

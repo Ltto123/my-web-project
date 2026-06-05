@@ -209,7 +209,7 @@ def _serialize_post(db: Session, post: models.PostModel, user_id: Optional[int] 
 
 
 
-def _serialize_comment(comment: models.CommentModel) -> dict:
+def _serialize_comment(comment) -> dict:
 
     return {
 
@@ -646,7 +646,17 @@ def _parse_json_urls(raw: Optional[str]) -> list:
         return []
 
 
-def _serialize_personal_post(post: models.PersonalPostModel) -> dict:
+def _serialize_personal_post(post: models.PersonalPostModel, db: Session, user_id: Optional[int] = None) -> dict:
+    like_count = db.query(models.PersonalLikeModel).filter(
+        models.PersonalLikeModel.personal_post_id == post.id).count()
+    comment_count = db.query(models.PersonalCommentModel).filter(
+        models.PersonalCommentModel.personal_post_id == post.id).count()
+    liked = False
+    if user_id:
+        liked = db.query(models.PersonalLikeModel).filter(
+            models.PersonalLikeModel.personal_post_id == post.id,
+            models.PersonalLikeModel.user_id == user_id,
+        ).first() is not None
     return {
         "id": post.id,
         "content": post.content,
@@ -654,11 +664,17 @@ def _serialize_personal_post(post: models.PersonalPostModel) -> dict:
         "file_urls": _parse_json_urls(post.file_urls),
         "author": post.author,
         "created_at": _utc_iso(post.created_at),
+        "like_count": like_count,
+        "comment_count": comment_count,
+        "liked": liked,
     }
 
 
 @app.get("/api/v1/personal", response_model=schemas.HttpResponseSchema)
-def get_personal_posts(db: Session = Depends(get_db)):
+def get_personal_posts(
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
     posts = (
         db.query(models.PersonalPostModel)
         .order_by(models.PersonalPostModel.id.desc())
@@ -667,7 +683,7 @@ def get_personal_posts(db: Session = Depends(get_db)):
     return schemas.HttpResponseSchema(
         code=0,
         msg="success",
-        data=[_serialize_personal_post(p) for p in posts],
+        data=[_serialize_personal_post(p, db, user_id) for p in posts],
     )
 
 
@@ -707,7 +723,7 @@ def create_personal_post(
     return schemas.HttpResponseSchema(
         code=0,
         msg="发布成功",
-        data=_serialize_personal_post(new_post),
+        data=_serialize_personal_post(new_post, db, user_id),
     )
 
 
@@ -734,6 +750,74 @@ def delete_personal_post(
     db.delete(post)
     db.commit()
     return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
+
+
+@app.post("/api/v1/personal/{post_id}/like", response_model=schemas.HttpResponseSchema)
+def toggle_personal_like(
+    post_id: int,
+    payload: schemas.LikeToggleSchema,
+    db: Session = Depends(get_db),
+):
+    post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
+    if not post:
+        return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    existing = db.query(models.PersonalLikeModel).filter(
+        models.PersonalLikeModel.personal_post_id == post_id,
+        models.PersonalLikeModel.user_id == payload.user_id,
+    ).first()
+    if existing:
+        db.delete(existing)
+        liked = False
+    else:
+        db.add(models.PersonalLikeModel(
+            personal_post_id=post_id,
+            user_id=payload.user_id,
+            created_at=datetime.now(timezone.utc),
+        ))
+        liked = True
+    db.commit()
+    like_count = db.query(models.PersonalLikeModel).filter(
+        models.PersonalLikeModel.personal_post_id == post_id).count()
+    return schemas.HttpResponseSchema(code=0, msg="success", data={"like_count": like_count, "liked": liked})
+
+
+@app.get("/api/v1/personal/{post_id}/comments", response_model=schemas.HttpResponseSchema)
+def get_personal_comments(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
+    if not post:
+        return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
+    comments = db.query(models.PersonalCommentModel).filter(
+        models.PersonalCommentModel.personal_post_id == post_id
+    ).order_by(models.PersonalCommentModel.id.asc()).all()
+    return schemas.HttpResponseSchema(code=0, msg="success", data=[_serialize_comment(c) for c in comments])
+
+
+@app.post("/api/v1/personal/{post_id}/comments", response_model=schemas.HttpResponseSchema)
+def create_personal_comment(
+    post_id: int,
+    payload: schemas.PersonalCommentCreateSchema,
+    db: Session = Depends(get_db),
+):
+    post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
+    if not post:
+        return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    comment = models.PersonalCommentModel(
+        personal_post_id=post_id,
+        user_id=payload.user_id,
+        author=user.username,
+        content=payload.content.strip(),
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return schemas.HttpResponseSchema(code=0, msg="评论成功", data=_serialize_comment(comment))
 
 
 @app.post("/api/v1/upload", response_model=schemas.HttpResponseSchema)
@@ -776,7 +860,15 @@ async def upload_file(
 VALID_RESOURCE_CATEGORIES = {"PPT", "课件", "学习笔记", "电子书", "其他"}
 
 
-def _serialize_resource(resource: models.ResourceModel) -> dict:
+def _serialize_resource(resource: models.ResourceModel, db: Session, user_id: Optional[int] = None) -> dict:
+    star_count = db.query(models.ResourceStarModel).filter(
+        models.ResourceStarModel.resource_id == resource.id).count()
+    starred = False
+    if user_id:
+        starred = db.query(models.ResourceStarModel).filter(
+            models.ResourceStarModel.resource_id == resource.id,
+            models.ResourceStarModel.user_id == user_id,
+        ).first() is not None
     return {
         "id": resource.id,
         "title": resource.title,
@@ -786,12 +878,15 @@ def _serialize_resource(resource: models.ResourceModel) -> dict:
         "category": resource.category,
         "author": resource.author,
         "created_at": _utc_iso(resource.created_at),
+        "star_count": star_count,
+        "starred": starred,
     }
 
 
 @app.get("/api/v1/resources", response_model=schemas.HttpResponseSchema)
 def get_resources(
     category: Optional[str] = Query(None),
+    user_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     query = db.query(models.ResourceModel).order_by(models.ResourceModel.id.desc())
@@ -801,7 +896,7 @@ def get_resources(
     return schemas.HttpResponseSchema(
         code=0,
         msg="success",
-        data=[_serialize_resource(r) for r in resources],
+        data=[_serialize_resource(r, db, user_id) for r in resources],
     )
 
 
@@ -835,7 +930,7 @@ def create_resource(
     db.add(resource)
     db.commit()
     db.refresh(resource)
-    return schemas.HttpResponseSchema(code=0, msg="上传成功", data=_serialize_resource(resource))
+    return schemas.HttpResponseSchema(code=0, msg="上传成功", data=_serialize_resource(resource, db, user_id))
 
 
 @app.delete("/api/v1/resources/{resource_id}", response_model=schemas.HttpResponseSchema)
@@ -857,6 +952,38 @@ def delete_resource(
     db.delete(resource)
     db.commit()
     return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
+
+
+@app.post("/api/v1/resources/{resource_id}/star", response_model=schemas.HttpResponseSchema)
+def toggle_resource_star(
+    resource_id: int,
+    payload: schemas.StarToggleSchema,
+    db: Session = Depends(get_db),
+):
+    resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()
+    if not resource:
+        return schemas.HttpResponseSchema(code=404, msg="资源不存在", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    existing = db.query(models.ResourceStarModel).filter(
+        models.ResourceStarModel.resource_id == resource_id,
+        models.ResourceStarModel.user_id == payload.user_id,
+    ).first()
+    if existing:
+        db.delete(existing)
+        starred = False
+    else:
+        db.add(models.ResourceStarModel(
+            resource_id=resource_id,
+            user_id=payload.user_id,
+            created_at=datetime.now(timezone.utc),
+        ))
+        starred = True
+    db.commit()
+    star_count = db.query(models.ResourceStarModel).filter(
+        models.ResourceStarModel.resource_id == resource_id).count()
+    return schemas.HttpResponseSchema(code=0, msg="success", data={"star_count": star_count, "starred": starred})
 
 
 @app.get("/api/v1/site-config")

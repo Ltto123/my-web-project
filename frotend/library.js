@@ -100,6 +100,8 @@ function renderResourceList() {
     const deleteBtnHtml = isOwner()
       ? `<button class="delete-card-btn" data-id="${r.id}">🗑️ 删除</button>`
       : "";
+    const starClass = r.starred ? "starred" : "";
+    const starText = r.starred ? "⭐" : "☆";
 
     html += `
       <article class="blog-card resource-card" data-id="${r.id}">
@@ -109,6 +111,7 @@ function renderResourceList() {
         <div class="card-meta">
           <span>📅 ${formatPostDate(r.created_at)}</span>
           <span>✍️ ${escapeHtml(r.author)}</span>
+          <span class="star-btn-card ${starClass}" data-id="${r.id}" data-action="star">${starText} <span class="star-count">${r.star_count || 0}</span></span>
         </div>
         <div class="card-footer" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <a href="${escapeHtml(r.file_url)}" class="toggle-btn" style="text-decoration:none;font-size:13px;" download>📥 ${escapeHtml(r.file_name)}</a>
@@ -285,6 +288,25 @@ function initAuthInteractions() {
   });
 }
 
+/* ========== 星标 ========== */
+
+async function toggleResourceStar(resourceId) {
+  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+  try {
+    const r = await fetch(`${API_BASE}/api/v1/resources/${resourceId}/star`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: currentUser.user_id }),
+    });
+    const result = await r.json();
+    if (result.code === 0) {
+      const resource = resources.find(r => r.id === resourceId);
+      if (resource) { resource.star_count = result.data.star_count; resource.starred = result.data.starred; }
+      renderResourceList();
+    }
+  } catch { /* ignore */ }
+}
+
 /* ========== Init ========== */
 
 function initInteractions() {
@@ -313,6 +335,14 @@ function initInteractions() {
         if (result.code === 0) loadResources(currentCategory);
         else alert(result.msg);
       } catch { alert("网络错误"); }
+      return;
+    }
+
+    const starBtn = e.target.closest("[data-action='star']");
+    if (starBtn) {
+      e.stopPropagation();
+      const id = parseInt(starBtn.getAttribute("data-id"));
+      await toggleResourceStar(id);
     }
   });
 }

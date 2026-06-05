@@ -121,6 +121,8 @@ function renderPersonalList() {
     const deleteBtnHtml = isOwner()
       ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除</button>`
       : "";
+    const likeBtnClass = post.liked ? "liked" : "";
+    const likeBtnText = post.liked ? "❤️" : "🤍";
 
     let imagesHtml = "";
     if (post.image_urls && post.image_urls.length > 0) {
@@ -146,6 +148,8 @@ function renderPersonalList() {
         <div class="card-meta">
           <span>📅 ${formatPostDate(post.created_at)}</span>
           <span>✍️ ${escapeHtml(post.author)}</span>
+          <span class="like-btn-card ${likeBtnClass}" data-id="${post.id}" data-action="like">${likeBtnText} <span class="like-count">${post.like_count || 0}</span></span>
+          <span class="comment-btn-card" data-id="${post.id}" data-action="comment">💬 ${post.comment_count || 0}</span>
         </div>
         <div class="card-content">${escapeHtml(post.content).replace(/\n/g, "<br>")}</div>
         ${imagesHtml}
@@ -338,6 +342,84 @@ async function uploadAllFiles(files) {
   return urls;
 }
 
+/* ========== 点赞与评论 ========== */
+
+async function togglePersonalLike(postId) {
+  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+  try {
+    const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/like`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: currentUser.user_id }),
+    });
+    const result = await r.json();
+    if (result.code === 0) {
+      const post = personalPosts.find(p => p.id === postId);
+      if (post) { post.like_count = result.data.like_count; post.liked = result.data.liked; }
+      renderPersonalList();
+    }
+  } catch { /* ignore */ }
+}
+
+async function fetchPersonalComments(postId) {
+  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`);
+  const result = await r.json();
+  if (result.code === 0) return result.data;
+  return [];
+}
+
+async function submitPersonalComment(postId, content) {
+  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return null; }
+  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: currentUser.user_id, content }),
+  });
+  const result = await r.json();
+  if (result.code !== 0) { alert(result.msg); return null; }
+  return result.data;
+}
+
+async function openPersonalDetail(postId) {
+  const comments = await fetchPersonalComments(postId);
+  const post = personalPosts.find(p => p.id === postId);
+
+  const modal = document.createElement("div");
+  modal.className = "custom-modal-overlay";
+  modal.innerHTML = `
+    <div class="custom-modal-content">
+      <span class="custom-modal-close">×</span>
+      <div class="modal-body-text">${escapeHtml(post?.content || "").replace(/\n/g, "<br>")}</div>
+      <section class="comments-section">
+        <h3 class="comments-title">评论 (${comments.length})</h3>
+        <div class="comments-list">${comments.map(c => `
+          <div class="comment-item">
+            <div class="comment-meta"><strong>${escapeHtml(c.author)}</strong> <span>${formatPostDate(c.created_at)}</span></div>
+            <p class="comment-text">${escapeHtml(c.content)}</p>
+          </div>
+        `).join("") || '<p class="comments-empty">暂无评论</p>'}</div>
+        <form class="comment-form-detail">
+          <textarea class="form-input form-textarea comment-input-detail" placeholder="${isLoggedIn() ? "写下你的评论..." : "登录后可评论"}" rows="2" ${isLoggedIn() ? "" : "disabled"}></textarea>
+          <button type="submit" class="toggle-btn" style="margin-top:8px;" ${isLoggedIn() ? "" : "disabled"}>发表评论</button>
+        </form>
+      </section>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector(".custom-modal-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  modal.querySelector(".comment-form-detail")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = modal.querySelector(".comment-input-detail");
+    const content = input.value.trim();
+    if (!content) return;
+    const c = await submitPersonalComment(postId, content);
+    if (c) { close(); openPersonalDetail(postId); }
+  });
+}
+
 /* ========== 发布与删除 ========== */
 
 function initPersonalInteractions() {
@@ -404,7 +486,7 @@ function initPersonalInteractions() {
       }
     });
 
-  // 删除按钮（仅博主）
+  // 卡片交互：删除、点赞、评论
   document
     .querySelector("#personal-list")
     ?.addEventListener("click", async (e) => {
@@ -413,21 +495,29 @@ function initPersonalInteractions() {
         if (!isOwner()) return;
         const targetId = e.target.getAttribute("data-id");
         if (!confirm("确定要删除这条内容吗？")) return;
-
         try {
-          const response = await fetch(
-            `${API_BASE}/api/v1/personal/${targetId}?user_id=${currentUser.user_id}`,
-            { method: "DELETE" },
-          );
-          const result = await response.json();
-          if (result.code === 0) {
-            await loadPersonalPosts();
-          } else {
-            alert(result.msg);
-          }
-        } catch {
-          alert("网络错误，删除失败。");
-        }
+          const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}?user_id=${currentUser.user_id}`, { method: "DELETE" });
+          const result = await r.json();
+          if (result.code === 0) await loadPersonalPosts();
+          else alert(result.msg);
+        } catch { alert("网络错误，删除失败。"); }
+        return;
+      }
+
+      const likeBtn = e.target.closest("[data-action='like']");
+      if (likeBtn) {
+        e.stopPropagation();
+        const postId = parseInt(likeBtn.getAttribute("data-id"));
+        await togglePersonalLike(postId);
+        return;
+      }
+
+      const commentBtn = e.target.closest("[data-action='comment']");
+      if (commentBtn) {
+        e.stopPropagation();
+        const postId = parseInt(commentBtn.getAttribute("data-id"));
+        await openPersonalDetail(postId);
+        return;
       }
     });
 }

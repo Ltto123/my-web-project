@@ -916,3 +916,47 @@ body.dark-theme .sidebar-line {
     padding: 20px;
   }
 }
+
+/* 点赞 & 评论按钮 */
+.like-btn-card,
+.comment-btn-card {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.like-btn-card:hover,
+.comment-btn-card:hover {
+  transform: scale(1.15);
+}
+
+.like-btn-card.liked {
+  color: #ef4444;
+}
+
+/* 星标按钮 */
+.star-btn-card {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+}
+
+.star-btn-card:hover {
+  transform: scale(1.15);
+}
+
+.star-btn-card.starred {
+  color: #f59e0b;
+}
+
+/* 评论弹窗内的表单 */
+.comment-form-detail {
+  margin-top: 12px;
+}

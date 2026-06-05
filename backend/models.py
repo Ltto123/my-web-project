@@ -67,3 +67,36 @@ class ResourceModel(Base):
     category = Column(String(50), nullable=False)
     author = Column(String(50), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+
+class PersonalLikeModel(Base):
+    __tablename__ = "personal_likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    personal_post_id = Column(Integer, ForeignKey("personal_posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+    __table_args__ = (UniqueConstraint("personal_post_id", "user_id", name="uq_personal_post_user_like"),)
+
+
+class PersonalCommentModel(Base):
+    __tablename__ = "personal_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    personal_post_id = Column(Integer, ForeignKey("personal_posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    author = Column(String(50), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+
+class ResourceStarModel(Base):
+    __tablename__ = "resource_stars"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resource_id = Column(Integer, ForeignKey("resources.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+    __table_args__ = (UniqueConstraint("resource_id", "user_id", name="uq_resource_user_star"),)
