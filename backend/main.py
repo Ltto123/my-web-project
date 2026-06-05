@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from typing import Optional
 
+import json
+
 import os
 
 from pathlib import Path
@@ -10,7 +12,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, Depends, Query
+import uuid
+
+from fastapi import FastAPI, Depends, Query, UploadFile, File
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,6 +39,10 @@ import backend.schemas as schemas
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frotend"
+
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
@@ -61,10 +69,35 @@ def _ensure_posts_created_at_column():
             conn.execute(text("ALTER TABLE posts ADD COLUMN created_at DATETIME"))
 
 
+def _ensure_personal_posts_media_columns():
+
+    inspector = inspect(engine)
+
+    if "personal_posts" not in inspector.get_table_names():
+
+        return
+
+    column_names = [col["name"] for col in inspector.get_columns("personal_posts")]
+
+    if "image_urls" not in column_names:
+
+        with engine.begin() as conn:
+
+            conn.execute(text("ALTER TABLE personal_posts ADD COLUMN image_urls TEXT"))
+
+    if "file_urls" not in column_names:
+
+        with engine.begin() as conn:
+
+            conn.execute(text("ALTER TABLE personal_posts ADD COLUMN file_urls TEXT"))
+
+
 
 
 
 _ensure_posts_created_at_column()
+
+_ensure_personal_posts_media_columns()
 
 
 
@@ -602,10 +635,23 @@ def create_post_comment(
 
 
 
+def _parse_json_urls(raw: Optional[str]) -> list:
+    """将 JSON 字符串安全解析为列表"""
+    if not raw or not raw.strip():
+        return []
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
 def _serialize_personal_post(post: models.PersonalPostModel) -> dict:
     return {
         "id": post.id,
         "content": post.content,
+        "image_urls": _parse_json_urls(post.image_urls),
+        "file_urls": _parse_json_urls(post.file_urls),
         "author": post.author,
         "created_at": _utc_iso(post.created_at),
     }
@@ -645,8 +691,13 @@ def create_personal_post(
     if not content:
         return schemas.HttpResponseSchema(code=400, msg="内容不能为空", data=None)
 
+    image_urls_json = json.dumps(payload.image_urls) if payload.image_urls else None
+    file_urls_json = json.dumps(payload.file_urls) if payload.file_urls else None
+
     new_post = models.PersonalPostModel(
         content=content,
+        image_urls=image_urls_json,
+        file_urls=file_urls_json,
         author=user.username,
         created_at=datetime.now(timezone.utc),
     )
@@ -685,6 +736,43 @@ def delete_personal_post(
     return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
 
 
+@app.post("/api/v1/upload", response_model=schemas.HttpResponseSchema)
+async def upload_file(
+    file: UploadFile = File(...),
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    # 鉴权
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not _is_blog_owner(user):
+        return schemas.HttpResponseSchema(code=403, msg="仅博主可上传文件", data=None)
+
+    # 校验文件大小（1000MB，由用户指定）
+    MAX_SIZE = 1000 * 1024 * 1024
+    contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        return schemas.HttpResponseSchema(code=400, msg="文件大小超过限制（1000MB）", data=None)
+
+    # 生成存储路径：uploads/YYYYMM/uuid.ext
+    month_dir = datetime.now(timezone.utc).strftime("%Y%m")
+    dest_dir = UPLOADS_DIR / month_dir
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    ext = Path(file.filename).suffix if file.filename else ""
+    safe_name = f"{uuid.uuid4().hex}{ext}"
+    dest_path = dest_dir / safe_name
+
+    with open(dest_path, "wb") as f:
+        f.write(contents)
+
+    url = f"/uploads/{month_dir}/{safe_name}"
+    return schemas.HttpResponseSchema(code=0, msg="上传成功", data={"url": url, "filename": file.filename})
+
+
 @app.get("/api/v1/health")
 
 def health_check():
@@ -706,6 +794,8 @@ def serve_blog():
 def serve_personal():
     return FileResponse(FRONTEND_DIR / "personal.html")
 
+
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 

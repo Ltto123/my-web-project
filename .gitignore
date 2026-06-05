@@ -1,29 +1,25 @@
-# --- Python / venv ---
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-
-# --- Database ---
-*.db
-
-# --- Environment ---
-.env
-
-# --- OS junk ---
-.DS_Store
-Thumbs.db
 
 # --- Clipboard / temp images ---
-clipboard_image.png
+# --- Database ---
+# --- Dev scripts (keep only project source) ---
+# --- Environment ---
+# --- IDE & Claude ---
+# --- OS junk ---
+# --- Python / venv ---
+*.db
+*.ps1
+*.pyc
+*.pyo
+.claude/
+.DS_Store
+.env
+.idea/
+.venv/
+.vscode/
+__pycache__/
+clip
 clip_small.jpg
 clip_tiny.png
-*.ps1
-
-# --- IDE & Claude ---
-.idea/
-.vscode/
-.claude/
-
-# --- Dev scripts (keep only project source) ---
-clip
+clipboard_image.png
+Thumbs.db
+uploads/

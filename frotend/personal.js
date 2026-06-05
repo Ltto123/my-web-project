@@ -116,6 +116,27 @@ function renderPersonalList() {
       ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除</button>`
       : "";
 
+    // 图片缩略图
+    let imagesHtml = "";
+    if (post.image_urls && post.image_urls.length > 0) {
+      imagesHtml = '<div class="image-grid">';
+      for (const imgUrl of post.image_urls) {
+        imagesHtml += `<a href="${escapeHtml(imgUrl)}" target="_blank"><img src="${escapeHtml(imgUrl)}" class="post-thumb" alt="图片" /></a>`;
+      }
+      imagesHtml += "</div>";
+    }
+
+    // 文件下载链接
+    let filesHtml = "";
+    if (post.file_urls && post.file_urls.length > 0) {
+      filesHtml = '<div class="file-list">';
+      for (const fileUrl of post.file_urls) {
+        const fileName = fileUrl.split("/").pop();
+        filesHtml += `<a href="${escapeHtml(fileUrl)}" class="file-link" download>📎 ${escapeHtml(fileName)}</a>`;
+      }
+      filesHtml += "</div>";
+    }
+
     html += `
       <article class="blog-card" data-id="${post.id}">
         <div class="card-meta">
@@ -123,6 +144,8 @@ function renderPersonalList() {
           <span>✍️ ${escapeHtml(post.author)}</span>
         </div>
         <div class="card-content">${escapeHtml(post.content).replace(/\n/g, "<br>")}</div>
+        ${imagesHtml}
+        ${filesHtml}
         <div class="card-footer">${deleteBtnHtml}</div>
       </article>
     `;
@@ -248,6 +271,44 @@ function initAuthInteractions() {
   });
 }
 
+/* ========== 文件上传 ========== */
+
+async function uploadFile(file) {
+  if (!isLoggedIn()) {
+    throw new Error("请先登录");
+  }
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_BASE}/api/v1/upload?user_id=${currentUser.user_id}`, {
+    method: "POST",
+    body: formData,
+  });
+  const result = await response.json();
+  // 处理 FastAPI 参数校验错误（如 user_id 不是整数）
+  if (result.detail) {
+    throw new Error(typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail));
+  }
+  if (result.code !== 0) {
+    throw new Error(result.msg || '上传失败');
+  }
+  return result.data.url;
+}
+
+async function uploadAllFiles(files) {
+  const urls = [];
+  for (const file of files) {
+    try {
+      const url = await uploadFile(file);
+      urls.push(url);
+      console.log(`✓ ${file.name} 上传成功`);
+    } catch (err) {
+      console.error(`✗ ${file.name} 上传失败:`, err.message);
+      alert(`上传 ${file.name} 失败: ${err.message}`);
+    }
+  }
+  return urls;
+}
+
 /* ========== 发布与删除 ========== */
 
 function initPersonalInteractions() {
@@ -272,15 +333,33 @@ function initPersonalInteractions() {
     const contentValue = document.querySelector("#personal-content").value.trim();
     if (!contentValue) return;
 
+    const imageInput = document.querySelector("#image-input");
+    const fileInput = document.querySelector("#file-input");
+    const imageFiles = imageInput?.files || [];
+    const otherFiles = fileInput?.files || [];
+
+    // 上传所有图片和文件
+    const imageUrls = imageFiles.length > 0 ? await uploadAllFiles(imageFiles) : [];
+    const fileUrls = otherFiles.length > 0 ? await uploadAllFiles(otherFiles) : [];
+
     try {
       const response = await fetch(`${API_BASE}/api/v1/personal?user_id=${currentUser.user_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: contentValue }),
+        body: JSON.stringify({
+          content: contentValue,
+          image_urls: imageUrls,
+          file_urls: fileUrls,
+        }),
       });
       const result = await response.json();
       if (result.code === 0) {
         e.target.reset();
+        // 清空预览
+        const imagePreview = document.querySelector("#image-preview");
+        const filePreview = document.querySelector("#file-preview");
+        if (imagePreview) imagePreview.innerHTML = "";
+        if (filePreview) filePreview.innerHTML = "";
         await loadPersonalPosts();
       } else {
         alert(result.msg);

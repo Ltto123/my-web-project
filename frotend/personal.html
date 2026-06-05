@@ -41,6 +41,16 @@
               class="form-input form-textarea"
             ></textarea>
           </div>
+          <div class="form-field">
+            <label for="image-input">📷 图片（可选）</label>
+            <input type="file" id="image-input" accept="image/*" multiple class="form-input" />
+            <div id="image-preview" class="upload-preview"></div>
+          </div>
+          <div class="form-field">
+            <label for="file-input">📎 文件（可选）</label>
+            <input type="file" id="file-input" accept=".pdf,.txt,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple class="form-input" />
+            <div id="file-preview" class="upload-preview"></div>
+          </div>
           <button type="submit" class="toggle-btn form-submit-btn">发布</button>
         </form>
       </section>

@@ -143,7 +143,9 @@ body.dark-theme .toggle-btn-outline:hover {
   font-size: 15px;
   background: white;
   color: #1e293b;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .search-input:focus {
@@ -240,7 +242,9 @@ body.dark-theme .blog-card {
 .card-content-preview {
   display: -webkit-box;
   -webkit-line-clamp: 5;
+  line-clamp: 5;
   -webkit-box-orient: vertical;
+  box-orient: vertical;
   overflow: hidden;
   min-height: 8em;
   margin-bottom: 0;
@@ -671,4 +675,71 @@ body.dark-theme .auth-tab.active {
   margin-bottom: 12px;
   color: #ef4444;
   font-size: 14px;
+}
+
+
+/* 个人主页 - 图片网格 */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.post-thumb {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s;
+}
+
+.post-thumb:hover {
+  transform: scale(1.05);
+}
+
+body.dark-theme .post-thumb {
+  border-color: #334155;
+}
+
+/* 文件链接 */
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.file-link {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.file-link:hover {
+  background: #e2e8f0;
+}
+
+body.dark-theme .file-link {
+  background: #1e293b;
+  color: #93c5fd;
+}
+
+body.dark-theme .file-link:hover {
+  background: #334155;
+}
+
+/* 上传预览 */
+.upload-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
 }
