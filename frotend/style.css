@@ -743,3 +743,50 @@ body.dark-theme .file-link:hover {
   font-size: 12px;
   color: #64748b;
 }
+
+
+/* 资源库 - 分类筛选栏 */
+.category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.cat-btn {
+  padding: 6px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.cat-btn:hover {
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.cat-btn.active {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+body.dark-theme .cat-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+body.dark-theme .cat-btn.active {
+  background: #1a73e8;
+  color: white;
+}
+
+.resource-card h2 {
+  margin-bottom: 8px;
+}

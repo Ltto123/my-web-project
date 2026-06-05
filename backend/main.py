@@ -773,6 +773,92 @@ async def upload_file(
     return schemas.HttpResponseSchema(code=0, msg="上传成功", data={"url": url, "filename": file.filename})
 
 
+VALID_RESOURCE_CATEGORIES = {"PPT", "课件", "学习笔记", "电子书", "其他"}
+
+
+def _serialize_resource(resource: models.ResourceModel) -> dict:
+    return {
+        "id": resource.id,
+        "title": resource.title,
+        "description": resource.description or "",
+        "file_url": resource.file_url,
+        "file_name": resource.file_name,
+        "category": resource.category,
+        "author": resource.author,
+        "created_at": _utc_iso(resource.created_at),
+    }
+
+
+@app.get("/api/v1/resources", response_model=schemas.HttpResponseSchema)
+def get_resources(
+    category: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    query = db.query(models.ResourceModel).order_by(models.ResourceModel.id.desc())
+    if category and category.strip():
+        query = query.filter(models.ResourceModel.category == category.strip())
+    resources = query.all()
+    return schemas.HttpResponseSchema(
+        code=0,
+        msg="success",
+        data=[_serialize_resource(r) for r in resources],
+    )
+
+
+@app.post("/api/v1/resources", response_model=schemas.HttpResponseSchema)
+def create_resource(
+    payload: schemas.ResourceCreateSchema,
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not _is_blog_owner(user):
+        return schemas.HttpResponseSchema(code=403, msg="仅博主可上传资源", data=None)
+
+    category = payload.category.strip()
+    if category not in VALID_RESOURCE_CATEGORIES:
+        return schemas.HttpResponseSchema(code=400, msg=f"无效分类，可选：{', '.join(sorted(VALID_RESOURCE_CATEGORIES))}", data=None)
+
+    resource = models.ResourceModel(
+        title=payload.title.strip(),
+        description=payload.description.strip() if payload.description else None,
+        file_url=payload.file_url.strip(),
+        file_name=payload.file_name.strip(),
+        category=category,
+        author=user.username,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(resource)
+    db.commit()
+    db.refresh(resource)
+    return schemas.HttpResponseSchema(code=0, msg="上传成功", data=_serialize_resource(resource))
+
+
+@app.delete("/api/v1/resources/{resource_id}", response_model=schemas.HttpResponseSchema)
+def delete_resource(
+    resource_id: int,
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not _is_blog_owner(user):
+        return schemas.HttpResponseSchema(code=403, msg="仅博主可删除资源", data=None)
+    resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()
+    if not resource:
+        return schemas.HttpResponseSchema(code=404, msg="资源不存在", data=None)
+    db.delete(resource)
+    db.commit()
+    return schemas.HttpResponseSchema(code=0, msg="删除成功", data=None)
+
+
 @app.get("/api/v1/health")
 
 def health_check():
@@ -793,6 +879,11 @@ def serve_blog():
 @app.get("/personal")
 def serve_personal():
     return FileResponse(FRONTEND_DIR / "personal.html")
+
+
+@app.get("/library")
+def serve_library():
+    return FileResponse(FRONTEND_DIR / "library.html")
 
 
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")

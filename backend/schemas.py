@@ -37,3 +37,11 @@ class PersonalPostCreateSchema(BaseModel):
     content: str = Field(..., min_length=1, description="个人内容正文")
     image_urls: Optional[List[str]] = Field(None, description="图片 URL 列表")
     file_urls: Optional[List[str]] = Field(None, description="文件 URL 列表")
+
+
+class ResourceCreateSchema(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150, description="资源标题")
+    description: Optional[str] = Field(None, description="资源描述")
+    category: str = Field(..., description="分类")
+    file_url: str = Field(..., description="文件 URL")
+    file_name: str = Field(..., description="文件名")

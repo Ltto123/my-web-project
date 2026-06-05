@@ -54,3 +54,16 @@ class PersonalPostModel(Base):
     file_urls = Column(Text, nullable=True)
     author = Column(String(50), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+
+class ResourceModel(Base):
+    __tablename__ = "resources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    file_url = Column(Text, nullable=False)
+    file_name = Column(String(255), nullable=False)
+    category = Column(String(50), nullable=False)
+    author = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
