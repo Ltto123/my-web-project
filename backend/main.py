@@ -421,7 +421,11 @@ def create_new_post(payload: schemas.PostCreateSchema, db: Session = Depends(get
 
 @app.delete("/api/v1/posts/{post_id}", response_model=schemas.HttpResponseSchema)
 
-def delete_post(post_id: int, db: Session = Depends(get_db)):
+def delete_post(
+    post_id: int,
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
 
     post_target = db.query(models.PostModel).filter(models.PostModel.id == post_id).first()
 
@@ -429,7 +433,17 @@ def delete_post(post_id: int, db: Session = Depends(get_db)):
 
         return schemas.HttpResponseSchema(code=404, msg="Post not found", data=None)
 
+    # 权限检查：必须登录
+    if not user_id:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
 
+    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
+    if not user:
+        return schemas.HttpResponseSchema(code=403, msg="用户不存在", data=None)
+
+    # 允许删除的条件：博主（可删所有人）或 作者本人
+    if not _is_blog_owner(user) and user.username != post_target.author:
+        return schemas.HttpResponseSchema(code=403, msg="无权删除他人文章", data=None)
 
     db.query(models.LikeModel).filter(models.LikeModel.post_id == post_id).delete()
 

@@ -13,6 +13,8 @@ let blogPosts = [];
 
 let currentUser = null;
 
+let ownerUsername = "";
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;")
@@ -127,6 +129,18 @@ function clearUserSession() {
 
 function isLoggedIn() {
   return Boolean(currentUser && currentUser.user_id);
+}
+
+function isOwner() {
+  return isLoggedIn() && ownerUsername && currentUser.username === ownerUsername;
+}
+
+function canDeletePost(post) {
+  if (!isLoggedIn()) return false;
+  // 博主可以删除所有文章
+  if (isOwner()) return true;
+  // 作者可以删除自己的文章
+  return currentUser.username === post.author;
 }
 
 function postsQueryParam(extraParams = "") {
@@ -360,7 +374,7 @@ function renderBlogGrid() {
   for (const post of blogPosts) {
     const hotBadge = post.is_hot ? `<span class="hot-badge">HOT</span>` : "";
 
-    const deleteBtnHtml = isLoggedIn()
+    const deleteBtnHtml = canDeletePost(post)
       ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除博文</button>`
       : "";
 
@@ -570,9 +584,10 @@ function initInteractions() {
       if (!confirm("确定要永久删除这篇文章吗？")) return;
 
       try {
-        const response = await fetch(`${API_BASE}/api/v1/posts/${targetId}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `${API_BASE}/api/v1/posts/${targetId}?user_id=${currentUser.user_id}`,
+          { method: "DELETE" },
+        );
 
         const result = await response.json();
 
@@ -938,9 +953,24 @@ async function openDetailModal(postId) {
     });
 }
 
-loadUserSession();
-initAuthInteractions();
+async function loadSiteConfig() {
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/site-config`);
+    const result = await response.json();
+    if (result.code === 0 && result.data) {
+      ownerUsername = result.data.owner_username || "";
+    }
+  } catch (e) {
+    console.error("加载站点配置失败:", e);
+  }
+}
 
-initInteractions();
+async function init() {
+  loadUserSession();
+  initAuthInteractions();
+  initInteractions();
+  await loadSiteConfig();
+  updateAuthUI();
+}
 
-updateAuthUI();
+init();
