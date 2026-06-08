@@ -4,8 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ltto的博客</title>
-    <!-- 引入外部样式表 CSS -->
     <link rel="stylesheet" href="style.css" />
+    <!-- KaTeX 数学公式渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <!-- marked.js Markdown 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
     <!-- 应用 Flexbox 实现两端对齐 -->
@@ -55,11 +59,24 @@
             />
           </div>
           <div class="form-field">
+            <div class="markdown-toolbar">
+              <button type="button" class="md-btn" data-md="**" title="加粗 (Ctrl+B)"><b>B</b></button>
+              <button type="button" class="md-btn" data-md="*" title="斜体 (Ctrl+I)"><i>I</i></button>
+              <button type="button" class="md-btn" data-md="### " title="标题">H</button>
+              <button type="button" class="md-btn" data-md="`" title="行内代码">&lt;/&gt;</button>
+              <button type="button" class="md-btn" data-md="```" title="代码块">```</button>
+              <button type="button" class="md-btn" data-md="> " title="引用">"</button>
+              <button type="button" class="md-btn" data-md="- " title="列表">•</button>
+              <button type="button" class="md-btn" data-md="[text](url)" title="链接">🔗</button>
+              <button type="button" class="md-btn" data-md="$ " title="行内公式">f(x)</button>
+              <button type="button" class="md-btn" data-md="$$\n\n$$" title="块级公式">∑</button>
+              <span class="md-hint">支持 Markdown 和 LaTeX 语法</span>
+            </div>
             <textarea
               id="post-content"
-              placeholder="在此输入正文内容..."
+              placeholder="在此输入正文内容...&#10;&#10;支持 Markdown：**粗体** *斜体* `代码`&#10;支持 LaTeX：行内 $E=mc^2$  块级 $$\int_0^1 x dx$$"
               required
-              rows="4"
+              rows="6"
               class="form-input form-textarea"
             ></textarea>
           </div>

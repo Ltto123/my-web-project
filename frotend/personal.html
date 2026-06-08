@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>个人主页 - ltto的博客</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
     <header class="blog-header">
@@ -34,11 +37,24 @@
         <h3 class="publish-form-title">📝 发布个人动态</h3>
         <form id="personal-form">
           <div class="form-field">
+            <div class="markdown-toolbar">
+              <button type="button" class="md-btn" data-md="**" title="加粗"><b>B</b></button>
+              <button type="button" class="md-btn" data-md="*" title="斜体"><i>I</i></button>
+              <button type="button" class="md-btn" data-md="### " title="标题">H</button>
+              <button type="button" class="md-btn" data-md="`" title="行内代码">&lt;/&gt;</button>
+              <button type="button" class="md-btn" data-md="```" title="代码块">```</button>
+              <button type="button" class="md-btn" data-md="> " title="引用">"</button>
+              <button type="button" class="md-btn" data-md="- " title="列表">•</button>
+              <button type="button" class="md-btn" data-md="[text](url)" title="链接">🔗</button>
+              <button type="button" class="md-btn" data-md="$ " title="行内公式">f(x)</button>
+              <button type="button" class="md-btn" data-md="$$\n\n$$" title="块级公式">∑</button>
+              <span class="md-hint">支持 Markdown 和 LaTeX</span>
+            </div>
             <textarea
               id="personal-content"
-              placeholder="分享你的想法..."
+              placeholder="分享你的想法...&#10;&#10;支持 Markdown：**粗体** *斜体* `代码`&#10;支持 LaTeX：$E=mc^2$  $$\int_0^1 x dx$$"
               required
-              rows="4"
+              rows="6"
               class="form-input form-textarea"
             ></textarea>
           </div>

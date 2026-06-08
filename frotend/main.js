@@ -26,6 +26,83 @@ function escapeHtml(text) {
     .replace(/'/g, "&#39;");
 }
 
+// ========== Markdown + LaTeX 渲染引擎 ==========
+function renderMarkdown(text) {
+  if (!text) return "";
+
+  // Step 1: 保护代码块中的 $ 符号，避免被 LaTeX 正则误匹配
+  const codeBlocks = [];
+  let processed = text.replace(/```[\s\S]*?```/g, (match) => {
+    codeBlocks.push(match);
+    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
+  });
+
+  // 保护行内代码 `...`
+  processed = processed.replace(/`([^`]+)`/g, (match) => {
+    codeBlocks.push(match);
+    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
+  });
+
+  // Step 2: 保护块级 LaTeX $$...$$
+  const latexItems = [];
+  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+    latexItems.push({ type: "block", formula: formula.trim() });
+    return `@@LATEX${latexItems.length - 1}@@`;
+  });
+
+  // Step 3: 保护行内 LaTeX $...$ （不匹配 $$ 和 \$）
+  processed = processed.replace(/(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)/g, (match, formula) => {
+    latexItems.push({ type: "inline", formula: formula.trim() });
+    return `@@LATEX${latexItems.length - 1}@@`;
+  });
+
+  // Step 4: Markdown → HTML
+  marked.setOptions({ breaks: true, gfm: true });
+  let html = marked.parse(processed);
+
+  // Step 5: 还原 LaTeX
+  latexItems.forEach((item, i) => {
+    const placeholder = `@@LATEX${i}@@`;
+    try {
+      const rendered = katex.renderToString(item.formula, {
+        displayMode: item.type === "block",
+        throwOnError: false,
+      });
+      html = html.replace(placeholder, rendered);
+    } catch (e) {
+      html = html.replace(placeholder, escapeHtml(item.formula));
+    }
+  });
+
+  // Step 6: 还原代码块
+  html = html.replace(/<p>@@CODEBLOCK(\d+)@@<\/p>/g, "@@CODEBLOCK$1@@");
+  codeBlocks.forEach((code, i) => {
+    const placeholder = `@@CODEBLOCK${i}@@`;
+    const escaped = code
+      .replace(/^```(\w*)\n?/, "")
+      .replace(/```$/, "")
+      .trim();
+    const lang = code.match(/^```(\w*)/)?.[1] || "";
+    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : "";
+    html = html.replace(
+      placeholder,
+      `<pre>${langLabel}<code>${escapeHtml(escaped)}</code></pre>`
+    );
+  });
+
+  return html;
+}
+
+// 提取纯文本摘要（用于卡片预览）
+function plainTextSummary(markdown, maxLen) {
+  maxLen = maxLen || 200;
+  // 先渲染为 HTML，再去除标签得到纯文本
+  const div = document.createElement("div");
+  div.innerHTML = renderMarkdown(markdown);
+  const plain = div.textContent || div.innerText || "";
+  return plain.length > maxLen ? plain.slice(0, maxLen) + "..." : plain;
+}
+
 function loadUserSession() {
   try {
     const raw = safeStorage.getItem(USER_STORAGE_KEY);
@@ -308,7 +385,7 @@ function renderBlogGrid() {
         </div>
 
         <div class="card-preview-area">
-          <p class="card-content card-content-preview">${escapeHtml(post.content)}</p>
+          <p class="card-content card-content-preview">${escapeHtml(plainTextSummary(post.content))}</p>
           <span class="read-more-hint">点击查看全文 →</span>
         </div>
         <div class="card-footer">
@@ -343,7 +420,7 @@ function renderCommentsList(comments) {
 
         </div>
 
-        <p class="comment-text">${escapeHtml(comment.content)}</p>
+        <p class="comment-text markdown-body">${renderMarkdown(comment.content)}</p>
 
       </div>
 
@@ -591,6 +668,56 @@ function initInteractions() {
       loadPostsFromServer();
     }
   });
+
+  // ========== Markdown 工具栏 ==========
+  const textarea = document.querySelector("#post-content");
+  if (textarea) {
+    document.querySelectorAll(".md-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const marker = btn.getAttribute("data-md");
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end);
+
+        let replacement = "";
+        let cursorOffset = 0;
+
+        if (marker === "```") {
+          replacement = `\n\`\`\`\n${selected || "code"}\n\`\`\`\n`;
+        } else if (marker === "$$\n\n$$") {
+          replacement = `\n\$\$\n${selected || "f(x)"}\n\$\$\n`;
+        } else if (marker === "[text](url)") {
+          replacement = `[${selected || "text"}](url)`;
+        } else if (marker === "**" || marker === "*" || marker === "`" || marker === "$ ") {
+          replacement = `${marker}${selected || marker}${marker}`;
+          cursorOffset = marker.length;
+        } else {
+          replacement = `${marker}${selected || ""}`;
+        }
+
+        textarea.focus();
+        document.execCommand("insertText", false, replacement);
+
+        // 调整光标位置到替换文本中间（内联标记放在标记之间）
+        const newPos = start + replacement.length;
+        if (cursorOffset && !selected) {
+          textarea.setSelectionRange(start + cursorOffset, newPos - cursorOffset);
+        }
+      });
+    });
+
+    // Ctrl+B 加粗, Ctrl+I 斜体 快捷键
+    textarea.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "b") {
+        e.preventDefault();
+        document.querySelector('.md-btn[data-md="**"]')?.click();
+      }
+      if (e.ctrlKey && e.key === "i") {
+        e.preventDefault();
+        document.querySelector('.md-btn[data-md="*"]')?.click();
+      }
+    });
+  }
 }
 
 async function openDetailModal(postId) {
@@ -650,7 +777,7 @@ async function openDetailModal(postId) {
 
       <hr class="modal-divider">
 
-      <div class="modal-body-text">${escapeHtml(post.content).replace(/\n/g, "<br>")}</div>
+      <div class="modal-body-text markdown-body">${renderMarkdown(post.content)}</div>
 
       <section class="comments-section">
 

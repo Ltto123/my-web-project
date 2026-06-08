@@ -19,6 +19,56 @@ function escapeHtml(text) {
     .replace(/'/g, "&#39;");
 }
 
+// ========== Markdown + LaTeX 渲染引擎 ==========
+function renderMarkdown(text) {
+  if (!text) return "";
+  const codeBlocks = [];
+  let processed = text.replace(/```[\s\S]*?```/g, (match) => {
+    codeBlocks.push(match);
+    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
+  });
+  processed = processed.replace(/`([^`]+)`/g, (match) => {
+    codeBlocks.push(match);
+    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
+  });
+  const latexItems = [];
+  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+    latexItems.push({ type: "block", formula: formula.trim() });
+    return `@@LATEX${latexItems.length - 1}@@`;
+  });
+  processed = processed.replace(/(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)/g, (match, formula) => {
+    latexItems.push({ type: "inline", formula: formula.trim() });
+    return `@@LATEX${latexItems.length - 1}@@`;
+  });
+  marked.setOptions({ breaks: true, gfm: true });
+  let html = marked.parse(processed);
+  latexItems.forEach((item, i) => {
+    try {
+      html = html.replace(`@@LATEX${i}@@`, katex.renderToString(item.formula, {
+        displayMode: item.type === "block", throwOnError: false,
+      }));
+    } catch (e) {
+      html = html.replace(`@@LATEX${i}@@`, escapeHtml(item.formula));
+    }
+  });
+  html = html.replace(/<p>@@CODEBLOCK(\d+)@@<\/p>/g, "@@CODEBLOCK$1@@");
+  codeBlocks.forEach((code, i) => {
+    const escaped = code.replace(/^```(\w*)\n?/, "").replace(/```$/, "").trim();
+    const lang = code.match(/^```(\w*)/)?.[1] || "";
+    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : "";
+    html = html.replace(`@@CODEBLOCK${i}@@`, `<pre>${langLabel}<code>${escapeHtml(escaped)}</code></pre>`);
+  });
+  return html;
+}
+
+function plainTextSummary(markdown, maxLen) {
+  maxLen = maxLen || 200;
+  const div = document.createElement("div");
+  div.innerHTML = renderMarkdown(markdown);
+  const plain = div.textContent || div.innerText || "";
+  return plain.length > maxLen ? plain.slice(0, maxLen) + "..." : plain;
+}
+
 function loadUserSession() {
   try {
     const raw = safeStorage.getItem(USER_STORAGE_KEY);
@@ -151,7 +201,7 @@ function renderPersonalList() {
           <span class="like-btn-card ${likeBtnClass}" data-id="${post.id}" data-action="like">${likeBtnText} <span class="like-count">${post.like_count || 0}</span></span>
           <span class="comment-btn-card" data-id="${post.id}" data-action="comment">💬 ${post.comment_count || 0}</span>
         </div>
-        <div class="card-content">${escapeHtml(post.content).replace(/\n/g, "<br>")}</div>
+        <div class="card-content markdown-body">${renderMarkdown(post.content)}</div>
         ${imagesHtml}
         ${filesHtml}
         <div class="card-footer">${deleteBtnHtml}</div>
@@ -389,13 +439,13 @@ async function openPersonalDetail(postId) {
   modal.innerHTML = `
     <div class="custom-modal-content">
       <span class="custom-modal-close">×</span>
-      <div class="modal-body-text">${escapeHtml(post?.content || "").replace(/\n/g, "<br>")}</div>
+      <div class="modal-body-text markdown-body">${renderMarkdown(post?.content || "")}</div>
       <section class="comments-section">
         <h3 class="comments-title">评论 (${comments.length})</h3>
         <div class="comments-list">${comments.map(c => `
           <div class="comment-item">
             <div class="comment-meta"><strong>${escapeHtml(c.author)}</strong> <span>${formatPostDate(c.created_at)}</span></div>
-            <p class="comment-text">${escapeHtml(c.content)}</p>
+            <p class="comment-text markdown-body">${renderMarkdown(c.content)}</p>
           </div>
         `).join("") || '<p class="comments-empty">暂无评论</p>'}</div>
         <form class="comment-form-detail">
@@ -485,6 +535,49 @@ function initPersonalInteractions() {
         alert("无法连接服务器。");
       }
     });
+
+  // ========== Markdown 工具栏 ==========
+  const textarea = document.querySelector("#personal-content");
+  if (textarea) {
+    document.querySelectorAll(".md-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const marker = btn.getAttribute("data-md");
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end);
+        let replacement = "";
+        let cursorOffset = 0;
+        if (marker === "```") {
+          replacement = `\n\`\`\`\n${selected || "code"}\n\`\`\`\n`;
+        } else if (marker === "$$\n\n$$") {
+          replacement = `\n\$\$\n${selected || "f(x)"}\n\$\$\n`;
+        } else if (marker === "[text](url)") {
+          replacement = `[${selected || "text"}](url)`;
+        } else if (marker === "**" || marker === "*" || marker === "`" || marker === "$ ") {
+          replacement = `${marker}${selected || marker}${marker}`;
+          cursorOffset = marker.length;
+        } else {
+          replacement = `${marker}${selected || ""}`;
+        }
+        textarea.focus();
+        document.execCommand("insertText", false, replacement);
+        if (cursorOffset && !selected) {
+          const newPos = start + replacement.length;
+          textarea.setSelectionRange(start + cursorOffset, newPos - cursorOffset);
+        }
+      });
+    });
+    textarea.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "b") {
+        e.preventDefault();
+        document.querySelector('.md-btn[data-md="**"]')?.click();
+      }
+      if (e.ctrlKey && e.key === "i") {
+        e.preventDefault();
+        document.querySelector('.md-btn[data-md="*"]')?.click();
+      }
+    });
+  }
 
   // 卡片交互：删除、点赞、评论
   document
