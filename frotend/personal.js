@@ -3,7 +3,7 @@ const API_BASE =
     ? "http://127.0.0.1:8000"
     : window.location.origin;
 
-const USER_STORAGE_KEY = "blog_current_user";
+const USER_STORAGE_KEY = "blog_token";
 
 let safeStorage = window.localStorage;
 let personalPosts = [];
@@ -72,15 +72,26 @@ function plainTextSummary(markdown, maxLen) {
 function loadUserSession() {
   try {
     const raw = safeStorage.getItem(USER_STORAGE_KEY);
-    currentUser = raw ? JSON.parse(raw) : null;
+    if (raw) {
+      const data = JSON.parse(raw);
+      currentUser = {
+        token: data.token,
+        user_id: data.user_id,
+        username: data.username,
+      };
+    }
   } catch {
     currentUser = null;
   }
 }
 
 function saveUserSession(user) {
-  currentUser = user;
-  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  currentUser = {
+    token: user.token,
+    user_id: user.user_id,
+    username: user.username,
+  };
+  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
 }
 
 function clearUserSession() {
@@ -90,6 +101,13 @@ function clearUserSession() {
 
 function isLoggedIn() {
   return Boolean(currentUser && currentUser.user_id);
+}
+
+function getAuthHeaders() {
+  if (isLoggedIn() && currentUser.token) {
+    return { "Authorization": "Bearer " + currentUser.token, "Content-Type": "application/json" };
+  }
+  return { "Content-Type": "application/json" };
 }
 
 function isOwner() {
@@ -146,7 +164,7 @@ function updateAuthUI() {
 
 async function loadPersonalPosts() {
   try {
-    const response = await fetch(`${API_BASE}/api/v1/personal`);
+    const response = await fetch(`${API_BASE}/api/v1/personal`, { headers: getAuthHeaders() });
     const result = await response.json();
     if (result.code === 0) {
       personalPosts = result.data;
@@ -357,9 +375,10 @@ async function uploadFile(file) {
   const formData = new FormData();
   formData.append("file", file);
   const response = await fetch(
-    `${API_BASE}/api/v1/upload?user_id=${currentUser.user_id}`,
+    `${API_BASE}/api/v1/upload`,
     {
       method: "POST",
+      headers: { "Authorization": "Bearer " + currentUser.token },
       body: formData,
     },
   );
@@ -399,8 +418,7 @@ async function togglePersonalLike(postId) {
   try {
     const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/like`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: currentUser.user_id }),
+      headers: getAuthHeaders(),
     });
     const result = await r.json();
     if (result.code === 0) {
@@ -422,8 +440,8 @@ async function submitPersonalComment(postId, content) {
   if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return null; }
   const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: currentUser.user_id, content }),
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ content }),
   });
   const result = await r.json();
   if (result.code !== 0) { alert(result.msg); return null; }
@@ -509,10 +527,10 @@ function initPersonalInteractions() {
 
       try {
         const response = await fetch(
-          `${API_BASE}/api/v1/personal?user_id=${currentUser.user_id}`,
+          `${API_BASE}/api/v1/personal`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
               content: contentValue,
               image_urls: imageUrls,
@@ -589,7 +607,7 @@ function initPersonalInteractions() {
         const targetId = e.target.getAttribute("data-id");
         if (!confirm("确定要删除这条内容吗？")) return;
         try {
-          const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}?user_id=${currentUser.user_id}`, { method: "DELETE" });
+          const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}`, { method: "DELETE", headers: getAuthHeaders() });
           const result = await r.json();
           if (result.code === 0) await loadPersonalPosts();
           else alert(result.msg);

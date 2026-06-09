@@ -31,6 +31,7 @@ import bcrypt
 
 
 from backend.database import engine, Base, get_db
+from backend.auth import create_access_token, get_current_user
 
 import backend.models as models
 
@@ -320,14 +321,11 @@ def login_user(payload: schemas.UserLoginSchema, db: Session = Depends(get_db)):
 
 
 
+    token = create_access_token(user.id)
     return schemas.HttpResponseSchema(
-
         code=0,
-
         msg="登录成功",
-
-        data={"user_id": user.id, "username": user.username},
-
+        data={"token": token, "user_id": user.id, "username": user.username},
     )
 
 
@@ -338,14 +336,14 @@ def login_user(payload: schemas.UserLoginSchema, db: Session = Depends(get_db)):
 
 def get_all_posts(
 
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
 
     search: Optional[str] = Query(None, description="搜索文章标题或内容"),
 
     db: Session = Depends(get_db),
 
 ):
-
+    user_id = current_user.id if current_user else None
     query = db.query(models.PostModel).order_by(models.PostModel.id.desc())
 
     # 搜索功能：对标题和内容做模糊匹配
@@ -373,11 +371,12 @@ def get_post_detail(
 
     post_id: int,
 
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
 
     db: Session = Depends(get_db),
 
 ):
+    user_id = current_user.id if current_user else None
 
     post = db.query(models.PostModel).filter(models.PostModel.id == post_id).first()
 
@@ -423,7 +422,7 @@ def create_new_post(payload: schemas.PostCreateSchema, db: Session = Depends(get
 
 def delete_post(
     post_id: int,
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -434,12 +433,9 @@ def delete_post(
         return schemas.HttpResponseSchema(code=404, msg="Post not found", data=None)
 
     # 权限检查：必须登录
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=403, msg="用户不存在", data=None)
+    user = current_user
 
     # 允许删除的条件：博主（可删所有人）或 作者本人
     if not _is_blog_owner(user) and user.username != post_target.author:
@@ -479,7 +475,7 @@ def toggle_post_like(
 
 
 
-    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
+    user = db.query(models.UserModel).filter(models.UserModel.id == current_user.id).first()
 
     if not user:
 
@@ -495,7 +491,7 @@ def toggle_post_like(
 
             models.LikeModel.post_id == post_id,
 
-            models.LikeModel.user_id == payload.user_id,
+            models.LikeModel.user_id == current_user.id,
 
         )
 
@@ -519,7 +515,7 @@ def toggle_post_like(
 
                 post_id=post_id,
 
-                user_id=payload.user_id,
+                user_id=current_user.id,
 
                 created_at=datetime.now(timezone.utc),
 
@@ -607,7 +603,7 @@ def create_post_comment(
 
 
 
-    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
+    user = db.query(models.UserModel).filter(models.UserModel.id == current_user.id).first()
 
     if not user:
 
@@ -619,7 +615,7 @@ def create_post_comment(
 
         post_id=post_id,
 
-        user_id=payload.user_id,
+        user_id=current_user.id,
 
         author=user.username,
 
@@ -686,9 +682,10 @@ def _serialize_personal_post(post: models.PersonalPostModel, db: Session, user_i
 
 @app.get("/api/v1/personal", response_model=schemas.HttpResponseSchema)
 def get_personal_posts(
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    user_id = current_user.id if current_user else None
     posts = (
         db.query(models.PersonalPostModel)
         .order_by(models.PersonalPostModel.id.desc())
@@ -704,15 +701,12 @@ def get_personal_posts(
 @app.post("/api/v1/personal", response_model=schemas.HttpResponseSchema)
 def create_personal_post(
     payload: schemas.PersonalPostCreateSchema,
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    user = current_user
 
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可发布个人内容", data=None)
@@ -744,15 +738,12 @@ def create_personal_post(
 @app.delete("/api/v1/personal/{post_id}", response_model=schemas.HttpResponseSchema)
 def delete_personal_post(
     post_id: int,
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    user = current_user
 
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可删除个人内容", data=None)
@@ -775,12 +766,12 @@ def toggle_personal_like(
     post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
     if not post:
         return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = current_user
     existing = db.query(models.PersonalLikeModel).filter(
         models.PersonalLikeModel.personal_post_id == post_id,
-        models.PersonalLikeModel.user_id == payload.user_id,
+        models.PersonalLikeModel.user_id == current_user.id,
     ).first()
     if existing:
         db.delete(existing)
@@ -788,7 +779,7 @@ def toggle_personal_like(
     else:
         db.add(models.PersonalLikeModel(
             personal_post_id=post_id,
-            user_id=payload.user_id,
+            user_id=current_user.id,
             created_at=datetime.now(timezone.utc),
         ))
         liked = True
@@ -818,12 +809,12 @@ def create_personal_comment(
     post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
     if not post:
         return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = current_user
     comment = models.PersonalCommentModel(
         personal_post_id=post_id,
-        user_id=payload.user_id,
+        user_id=current_user.id,
         author=user.username,
         content=payload.content.strip(),
         created_at=datetime.now(timezone.utc),
@@ -837,7 +828,7 @@ def create_personal_comment(
 @app.post("/api/v1/upload", response_model=schemas.HttpResponseSchema)
 async def upload_file(
     file: UploadFile = File(...),
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     # 鉴权
@@ -900,9 +891,10 @@ def _serialize_resource(resource: models.ResourceModel, db: Session, user_id: Op
 @app.get("/api/v1/resources", response_model=schemas.HttpResponseSchema)
 def get_resources(
     category: Optional[str] = Query(None),
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    user_id = current_user.id if current_user else None
     query = db.query(models.ResourceModel).order_by(models.ResourceModel.id.desc())
     if category and category.strip():
         query = query.filter(models.ResourceModel.category == category.strip())
@@ -917,7 +909,7 @@ def get_resources(
 @app.post("/api/v1/resources", response_model=schemas.HttpResponseSchema)
 def create_resource(
     payload: schemas.ResourceCreateSchema,
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if not user_id:
@@ -950,7 +942,7 @@ def create_resource(
 @app.delete("/api/v1/resources/{resource_id}", response_model=schemas.HttpResponseSchema)
 def delete_resource(
     resource_id: int,
-    user_id: Optional[int] = Query(None),
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if not user_id:
@@ -977,12 +969,12 @@ def toggle_resource_star(
     resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()
     if not resource:
         return schemas.HttpResponseSchema(code=404, msg="资源不存在", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == payload.user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    user = current_user
     existing = db.query(models.ResourceStarModel).filter(
         models.ResourceStarModel.resource_id == resource_id,
-        models.ResourceStarModel.user_id == payload.user_id,
+        models.ResourceStarModel.user_id == current_user.id,
     ).first()
     if existing:
         db.delete(existing)
@@ -990,7 +982,7 @@ def toggle_resource_star(
     else:
         db.add(models.ResourceStarModel(
             resource_id=resource_id,
-            user_id=payload.user_id,
+            user_id=current_user.id,
             created_at=datetime.now(timezone.utc),
         ))
         starred = True

@@ -12,6 +12,8 @@
 *.pyo
 .claude/
 openspec/
+deploy.py
+project.tar.gz
 .DS_Store
 .env
 .idea/

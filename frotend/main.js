@@ -3,7 +3,7 @@ const API_BASE =
     ? "http://127.0.0.1:8000"
     : window.location.origin;
 
-const USER_STORAGE_KEY = "blog_current_user";
+const USER_STORAGE_KEY = "blog_token";
 
 const HOT_LIKE_THRESHOLD = 1;
 
@@ -108,17 +108,26 @@ function plainTextSummary(markdown, maxLen) {
 function loadUserSession() {
   try {
     const raw = safeStorage.getItem(USER_STORAGE_KEY);
-
-    currentUser = raw ? JSON.parse(raw) : null;
+    if (raw) {
+      const data = JSON.parse(raw);
+      currentUser = {
+        token: data.token,
+        user_id: data.user_id,
+        username: data.username,
+      };
+    }
   } catch {
     currentUser = null;
   }
 }
 
 function saveUserSession(user) {
-  currentUser = user;
-
-  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  currentUser = {
+    token: user.token,
+    user_id: user.user_id,
+    username: user.username,
+  };
+  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
 }
 
 function clearUserSession() {
@@ -135,6 +144,13 @@ function isOwner() {
   return isLoggedIn() && ownerUsername && currentUser.username === ownerUsername;
 }
 
+function getAuthHeaders() {
+  if (isLoggedIn() && currentUser.token) {
+    return { "Authorization": "Bearer " + currentUser.token, "Content-Type": "application/json" };
+  }
+  return { "Content-Type": "application/json" };
+}
+
 function canDeletePost(post) {
   if (!isLoggedIn()) return false;
   // 博主可以删除所有文章
@@ -144,11 +160,8 @@ function canDeletePost(post) {
 }
 
 function postsQueryParam(extraParams = "") {
-  const base = isLoggedIn() ? `?user_id=${currentUser.user_id}` : "";
-  if (extraParams) {
-    return base ? `${base}&${extraParams}` : `?${extraParams}`;
-  }
-  return base;
+  // JWT: user_id no longer needed in URL - token is in headers
+  return extraParams ? `?${extraParams}` : "";
 }
 
 function formatPostDate(dateValue) {
@@ -320,6 +333,7 @@ async function loadPostsFromServer(searchTerm = "") {
     const params = trimmed ? `search=${encodeURIComponent(trimmed)}` : "";
     const response = await fetch(
       `${API_BASE}/api/v1/posts${postsQueryParam(params)}`,
+      { headers: getAuthHeaders() },
     );
 
     const result = await response.json();
@@ -339,6 +353,7 @@ async function loadPostsFromServer(searchTerm = "") {
 async function fetchPostDetail(postId) {
   const response = await fetch(
     `${API_BASE}/api/v1/posts/${postId}${postsQueryParam()}`,
+    { headers: getAuthHeaders() },
   );
 
   const result = await response.json();
@@ -585,8 +600,8 @@ function initInteractions() {
 
       try {
         const response = await fetch(
-          `${API_BASE}/api/v1/posts/${targetId}?user_id=${currentUser.user_id}`,
-          { method: "DELETE" },
+          `${API_BASE}/api/v1/posts/${targetId}`,
+          { method: "DELETE", headers: getAuthHeaders() },
         );
 
         const result = await response.json();
