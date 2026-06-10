@@ -22,11 +22,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # ============================================
 # ⑤ 拷贝项目代码
-#    只需要 backend（Python）和 frotend（前端静态文件）
+#    只需要 backend（Python）和 frontend（前端静态文件）
 #    .venv 不用拷（容器里自己装好了）
 # ============================================
 COPY backend/ ./backend/
-COPY frotend/ ./frotend/
+COPY frontend/ ./frontend/
 
 # ============================================
 # ⑥ 声明容器监听端口（文档用途，实际不占端口）

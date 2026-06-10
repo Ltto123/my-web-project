@@ -39,7 +39,7 @@ import backend.schemas as schemas
 
 
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frotend"
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 
@@ -832,11 +832,9 @@ async def upload_file(
     db: Session = Depends(get_db),
 ):
     # 鉴权
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    user = current_user
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可上传文件", data=None)
 
@@ -912,11 +910,9 @@ def create_resource(
     current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    user = current_user
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可上传资源", data=None)
 
@@ -945,11 +941,9 @@ def delete_resource(
     current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not user_id:
+    if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-    user = db.query(models.UserModel).filter(models.UserModel.id == user_id).first()
-    if not user:
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
+    user = current_user
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可删除资源", data=None)
     resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()

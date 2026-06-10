@@ -1192,3 +1192,107 @@ body.dark-theme .katex .mrel {
 .blog-card .markdown-body h3 { font-size: 1em; margin: 0.3em 0; }
 .blog-card .markdown-body pre { max-height: 200px; }
 .blog-card .markdown-body blockquote { padding: 0.3em 0.8em; margin: 0.3em 0; }
+
+/* ==========================================================================
+   资源预览弹窗
+   ========================================================================== */
+.preview-modal-content {
+  max-width: 1000px;
+  width: 95vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+body.dark-theme .preview-header { border-color: #334155; }
+
+.preview-title {
+  font-size: 1.2em;
+  margin: 0 0 6px;
+  padding-right: 24px;
+}
+
+.preview-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+body.dark-theme .preview-meta { color: #94a3b8; }
+
+.preview-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 350px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.preview-frame {
+  width: 100%;
+  min-height: 550px;
+  border: none;
+  border-radius: 4px;
+}
+
+.preview-image-wrap { text-align: center; width: 100%; }
+
+.preview-image {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.preview-text-wrap { width: 100%; }
+
+.preview-text {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 65vh;
+  overflow: auto;
+}
+
+body.dark-theme .preview-text { background: #1e293b; color: #e2e8f0; }
+
+.preview-unsupported {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+body.dark-theme .preview-unsupported { color: #94a3b8; }
+
+.preview-unsupported-icon { font-size: 56px; margin-bottom: 14px; }
+
+.preview-hint { font-size: 13px; color: #94a3b8; }
+
+.preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+body.dark-theme .preview-footer { border-color: #334155; }
+
+.preview-file-info { font-size: 11px; color: #94a3b8; }
