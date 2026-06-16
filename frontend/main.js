@@ -872,9 +872,7 @@ async function openDetailModal(postId) {
       const response = await fetch(`${API_BASE}/api/v1/posts/${postId}/like`, {
         method: "POST",
 
-        headers: { "Content-Type": "application/json" },
-
-        body: JSON.stringify({ user_id: currentUser.user_id }),
+        headers: getAuthHeaders(),
       });
 
       const result = await response.json();
@@ -932,9 +930,9 @@ async function openDetailModal(postId) {
           {
             method: "POST",
 
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
 
-            body: JSON.stringify({ user_id: currentUser.user_id, content }),
+            body: JSON.stringify({ content }),
           },
         );
 

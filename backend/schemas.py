@@ -24,12 +24,7 @@ class PostCreateSchema(BaseModel):
     author: str = Field(..., description="作者署名")
 
 
-class LikeToggleSchema(BaseModel):
-    user_id: int = Field(..., description="当前登录用户 ID")
-
-
 class CommentCreateSchema(BaseModel):
-    user_id: int = Field(..., description="当前登录用户 ID")
     content: str = Field(..., min_length=1, max_length=500, description="评论内容")
 
 
@@ -48,9 +43,8 @@ class ResourceCreateSchema(BaseModel):
 
 
 class PersonalCommentCreateSchema(BaseModel):
-    user_id: int = Field(..., description="当前登录用户 ID")
     content: str = Field(..., min_length=1, max_length=500, description="评论内容")
 
 
 class StarToggleSchema(BaseModel):
-    user_id: int = Field(..., description="当前登录用户 ID")
+    pass  # 保留占位，兼容其他可能的引用

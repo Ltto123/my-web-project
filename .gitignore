@@ -26,3 +26,10 @@ clip_tiny.png
 clipboard_image.png
 Thumbs.db
 uploads/
+backend/herb_model_data/*.pth
+project.tar.gz
+*.docx
+*.doc
+*.pptx
+*.pdf
+*.xlsx

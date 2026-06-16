@@ -3,20 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>个人主页 - ltto的博客</title>
+    <title>中药识别 - ltto的博客</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
     <header class="blog-header">
-      <div class="logo">Ltto的乌托邦 · 个人主页</div>
+      <div class="logo">🌿 中药识别</div>
       <div class="header-actions">
-        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 返回博客</a>
+        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
+        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
         <a href="/library" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">📚 资源库</a>
-        <a href="/herb" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">🌿 中药识别</a>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
           <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">
@@ -34,61 +31,58 @@
     </header>
 
     <main class="blog-layout">
-      <!-- 发布表单：仅博主可见 -->
-      <section id="publish-section" class="publish-form-container hidden">
-        <h3 class="publish-form-title">📝 发布个人动态</h3>
-        <form id="personal-form">
-          <div class="form-field">
-            <div class="markdown-toolbar">
-              <button type="button" class="md-btn" data-md="**" title="加粗"><b>B</b></button>
-              <button type="button" class="md-btn" data-md="*" title="斜体"><i>I</i></button>
-              <button type="button" class="md-btn" data-md="### " title="标题">H</button>
-              <button type="button" class="md-btn" data-md="`" title="行内代码">&lt;/&gt;</button>
-              <button type="button" class="md-btn" data-md="```" title="代码块">```</button>
-              <button type="button" class="md-btn" data-md="> " title="引用">"</button>
-              <button type="button" class="md-btn" data-md="- " title="列表">•</button>
-              <button type="button" class="md-btn" data-md="[text](url)" title="链接">🔗</button>
-              <button type="button" class="md-btn" data-md="$ " title="行内公式">f(x)</button>
-              <button type="button" class="md-btn" data-md="$$\n\n$$" title="块级公式">∑</button>
-              <span class="md-hint">支持 Markdown 和 LaTeX</span>
-            </div>
-            <textarea
-              id="personal-content"
-              placeholder="分享你的想法...&#10;&#10;支持 Markdown：**粗体** *斜体* `代码`&#10;支持 LaTeX：$E=mc^2$  $$\int_0^1 x dx$$"
-              required
-              rows="6"
-              class="form-input form-textarea"
-            ></textarea>
-          </div>
-          <div class="form-field">
-            <label for="image-input">📷 图片（可选）</label>
-            <input type="file" id="image-input" accept="image/*" multiple class="form-input" />
-            <div id="image-preview" class="upload-preview"></div>
-          </div>
-          <div class="form-field">
-            <label for="file-input">📎 文件（可选）</label>
-            <input type="file" id="file-input" accept=".pdf,.txt,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx" multiple class="form-input" />
-            <div id="file-preview" class="upload-preview"></div>
-          </div>
-          <button type="submit" class="toggle-btn form-submit-btn">发布</button>
-        </form>
-      </section>
-
-      <section id="login-prompt-section" class="login-prompt-container">
-        <p>登录后即可发布个人内容</p>
-        <button id="login-prompt-btn" class="toggle-btn" type="button">立即登录</button>
-      </section>
-
       <section class="intro-section">
-        <h1>👤 个人主页</h1>
-        <p>这里记录了博主的个人动态与随笔</p>
+        <h1>🌿 中药饮片智能识别</h1>
+        <p>基于 MobileNetV3 深度学习的 20 种常见中药材图片分类识别，准确率 94.3%</p>
       </section>
 
-      <div id="personal-list" class="blog-grid"></div>
+      <!-- 上传与识别区 -->
+      <section class="publish-form-container">
+        <h3 class="publish-form-title">📷 上传中药图片</h3>
+        <div class="form-field">
+          <label for="herb-file" style="font-weight:500; margin-bottom:6px; display:block;">选择图片文件</label>
+          <input type="file" id="herb-file" accept="image/*" class="form-input" />
+        </div>
+        <div class="form-field">
+          <label for="herb-model" style="font-weight:500; margin-bottom:6px; display:block;">🧠 推理模型</label>
+          <select id="herb-model" class="form-input">
+            <option value="MobileNetV3-Large">🥇 MobileNetV3-Large（推荐 · 94.3% · 17MB）</option>
+            <option value="EfficientNet-B3">🥈 EfficientNet-B3（93.7% · 42MB）</option>
+            <option value="ResNet50">🥉 ResNet50（91.7% · 91MB）</option>
+          </select>
+        </div>
+        <div id="herb-drop-zone" class="herb-drop-zone">
+          <div id="herb-drop-placeholder" class="herb-drop-placeholder">
+            <span class="herb-drop-icon">🖼️</span>
+            <span>拖拽中药图片到此处</span>
+            <span style="font-size:12px;color:#94a3b8;">或点击上方「选择图片文件」</span>
+          </div>
+          <img id="preview-img" src="" alt="预览" class="hidden" />
+        </div>
+        <button id="predict-btn" class="toggle-btn form-submit-btn" type="button">
+          🔍 开始识别
+        </button>
+        <div id="loading-area" class="hidden" style="text-align:center; padding:20px;">
+          <div class="herb-spinner"></div>
+          <p style="margin-top:12px; color:#64748b;">AI 正在分析识别中，请稍候...</p>
+        </div>
+      </section>
+
+      <!-- 识别结果区 -->
+      <section id="result-section" class="publish-form-container hidden">
+        <h3 class="publish-form-title">📊 识别结果</h3>
+        <div id="result-content"></div>
+      </section>
+
+      <!-- 支持的中药种类 -->
+      <section class="publish-form-container">
+        <h3 class="publish-form-title">📋 支持识别的中药种类（20 种）</h3>
+        <div id="class-grid" class="herb-class-grid"></div>
+      </section>
     </main>
 
     <footer class="blog-footer">
-      <p>© 2026 Ltto的乌托邦. Powered by pure Vanilla JS.</p>
+      <p>© 2026 Ltto的乌托邦 · 中药识别由 PyTorch 三模型驱动（MobileNetV3 / EfficientNet / ResNet50）</p>
     </footer>
 
     <!-- 登录 / 注册弹窗 -->
@@ -162,6 +156,6 @@
       </div>
     </div>
 
-    <script src="personal.js?v=3"></script>
+    <script src="herb.js?v=1"></script>
   </body>
 </html>

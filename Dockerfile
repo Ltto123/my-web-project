@@ -18,7 +18,7 @@ COPY requirements.txt .
 # ④ 安装依赖
 #    --no-cache-dir 不保留 pip 缓存，镜像更小
 # ============================================
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # ============================================
 # ⑤ 拷贝项目代码

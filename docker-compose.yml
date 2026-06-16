@@ -13,6 +13,7 @@ services:
     volumes:
       - ./blog.db:/app/blog.db      # SQLite 数据库持久化
       - ./uploads:/app/uploads      # 用户上传文件持久化
+      - ./backend/herb_model_data:/app/backend/herb_model_data  # AI 模型持久化
 
     # ④ 环境变量（不走 .env 文件了，直接写这里）
     environment:

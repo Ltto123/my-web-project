@@ -32,6 +32,7 @@ import bcrypt
 
 from backend.database import engine, Base, get_db
 from backend.auth import create_access_token, get_current_user
+from backend.herb_routes import router as herb_router
 
 import backend.models as models
 
@@ -242,6 +243,9 @@ def _is_blog_owner(user: Optional[models.UserModel]) -> bool:
 
 
 app = FastAPI(title="Blog System API")
+
+# 注册中药识别路由（必须在静态文件挂载之前）
+app.include_router(herb_router)
 
 
 
@@ -461,27 +465,20 @@ def toggle_post_like(
 
     post_id: int,
 
-    payload: schemas.LikeToggleSchema,
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
 
     db: Session = Depends(get_db),
 
 ):
+
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
 
     post = db.query(models.PostModel).filter(models.PostModel.id == post_id).first()
 
     if not post:
 
         return schemas.HttpResponseSchema(code=404, msg="文章不存在", data=None)
-
-
-
-    user = db.query(models.UserModel).filter(models.UserModel.id == current_user.id).first()
-
-    if not user:
-
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
-
-
 
     existing_like = (
 
@@ -591,9 +588,14 @@ def create_post_comment(
 
     payload: schemas.CommentCreateSchema,
 
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
+
     db: Session = Depends(get_db),
 
 ):
+
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
 
     post = db.query(models.PostModel).filter(models.PostModel.id == post_id).first()
 
@@ -601,23 +603,13 @@ def create_post_comment(
 
         return schemas.HttpResponseSchema(code=404, msg="文章不存在", data=None)
 
-
-
-    user = db.query(models.UserModel).filter(models.UserModel.id == current_user.id).first()
-
-    if not user:
-
-        return schemas.HttpResponseSchema(code=10005, msg="用户不存在", data=None)
-
-
-
     new_comment = models.CommentModel(
 
         post_id=post_id,
 
         user_id=current_user.id,
 
-        author=user.username,
+        author=current_user.username,
 
         content=payload.content.strip(),
 
@@ -731,7 +723,7 @@ def create_personal_post(
     return schemas.HttpResponseSchema(
         code=0,
         msg="发布成功",
-        data=_serialize_personal_post(new_post, db, user_id),
+        data=_serialize_personal_post(new_post, db, user.id),
     )
 
 
@@ -760,7 +752,7 @@ def delete_personal_post(
 @app.post("/api/v1/personal/{post_id}/like", response_model=schemas.HttpResponseSchema)
 def toggle_personal_like(
     post_id: int,
-    payload: schemas.LikeToggleSchema,
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
@@ -768,7 +760,6 @@ def toggle_personal_like(
         return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
     if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-    user = current_user
     existing = db.query(models.PersonalLikeModel).filter(
         models.PersonalLikeModel.personal_post_id == post_id,
         models.PersonalLikeModel.user_id == current_user.id,
@@ -804,6 +795,7 @@ def get_personal_comments(post_id: int, db: Session = Depends(get_db)):
 def create_personal_comment(
     post_id: int,
     payload: schemas.PersonalCommentCreateSchema,
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
@@ -838,23 +830,36 @@ async def upload_file(
     if not _is_blog_owner(user):
         return schemas.HttpResponseSchema(code=403, msg="仅博主可上传文件", data=None)
 
-    # 校验文件大小（1000MB，由用户指定）
+    # 校验文件名
+    if not file.filename or not file.filename.strip():
+        return schemas.HttpResponseSchema(code=400, msg="请选择有效的文件", data=None)
+
+    # 校验文件大小（1000MB）
     MAX_SIZE = 1000 * 1024 * 1024
-    contents = await file.read()
+    try:
+        contents = await file.read()
+    except Exception as e:
+        return schemas.HttpResponseSchema(code=500, msg=f"读取文件失败: {e}", data=None)
+
     if len(contents) > MAX_SIZE:
         return schemas.HttpResponseSchema(code=400, msg="文件大小超过限制（1000MB）", data=None)
 
     # 生成存储路径：uploads/YYYYMM/uuid.ext
-    month_dir = datetime.now(timezone.utc).strftime("%Y%m")
-    dest_dir = UPLOADS_DIR / month_dir
-    dest_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        month_dir = datetime.now(timezone.utc).strftime("%Y%m")
+        dest_dir = UPLOADS_DIR / month_dir
+        dest_dir.mkdir(parents=True, exist_ok=True)
 
-    ext = Path(file.filename).suffix if file.filename else ""
-    safe_name = f"{uuid.uuid4().hex}{ext}"
-    dest_path = dest_dir / safe_name
+        ext = Path(file.filename).suffix if file.filename else ""
+        safe_name = f"{uuid.uuid4().hex}{ext}"
+        dest_path = dest_dir / safe_name
 
-    with open(dest_path, "wb") as f:
-        f.write(contents)
+        with open(dest_path, "wb") as f:
+            f.write(contents)
+    except OSError as e:
+        return schemas.HttpResponseSchema(code=500, msg=f"文件写入失败（磁盘满或权限不足）: {e}", data=None)
+    except Exception as e:
+        return schemas.HttpResponseSchema(code=500, msg=f"保存文件失败: {e}", data=None)
 
     url = f"/uploads/{month_dir}/{safe_name}"
     return schemas.HttpResponseSchema(code=0, msg="上传成功", data={"url": url, "filename": file.filename})
@@ -932,7 +937,7 @@ def create_resource(
     db.add(resource)
     db.commit()
     db.refresh(resource)
-    return schemas.HttpResponseSchema(code=0, msg="上传成功", data=_serialize_resource(resource, db, user_id))
+    return schemas.HttpResponseSchema(code=0, msg="上传成功", data=_serialize_resource(resource, db, user.id))
 
 
 @app.delete("/api/v1/resources/{resource_id}", response_model=schemas.HttpResponseSchema)
@@ -957,7 +962,7 @@ def delete_resource(
 @app.post("/api/v1/resources/{resource_id}/star", response_model=schemas.HttpResponseSchema)
 def toggle_resource_star(
     resource_id: int,
-    payload: schemas.StarToggleSchema,
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()
@@ -965,7 +970,6 @@ def toggle_resource_star(
         return schemas.HttpResponseSchema(code=404, msg="资源不存在", data=None)
     if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
-    user = current_user
     existing = db.query(models.ResourceStarModel).filter(
         models.ResourceStarModel.resource_id == resource_id,
         models.ResourceStarModel.user_id == current_user.id,
@@ -1020,6 +1024,11 @@ def serve_personal():
 @app.get("/library")
 def serve_library():
     return FileResponse(FRONTEND_DIR / "library.html")
+
+
+@app.get("/herb")
+def serve_herb():
+    return FileResponse(FRONTEND_DIR / "HERB.html")
 
 
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
