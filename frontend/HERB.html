@@ -55,7 +55,7 @@
           <div id="herb-drop-placeholder" class="herb-drop-placeholder">
             <span class="herb-drop-icon">🖼️</span>
             <span>拖拽中药图片到此处</span>
-            <span style="font-size:12px;color:#94a3b8;">或点击上方「选择图片文件」</span>
+            <span class="herb-drop-hint">或点击上方「选择图片文件」</span>
           </div>
           <img id="preview-img" src="" alt="预览" class="hidden" />
         </div>
@@ -64,7 +64,7 @@
         </button>
         <div id="loading-area" class="hidden" style="text-align:center; padding:20px;">
           <div class="herb-spinner"></div>
-          <p style="margin-top:12px; color:#64748b;">AI 正在分析识别中，请稍候...</p>
+          <p class="herb-loading-text">AI 正在分析识别中，请稍候...</p>
         </div>
       </section>
 
@@ -156,6 +156,7 @@
       </div>
     </div>
 
-    <script src="herb.js?v=1"></script>
+    <script src="common.js?v=1"></script>
+    <script src="herb.js?v=2"></script>
   </body>
 </html>

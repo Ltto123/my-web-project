@@ -1,424 +1,43 @@
-const API_BASE =
-  window.location.protocol === "file:"
-    ? "http://127.0.0.1:8000"
-    : window.location.origin;
+/**
+ * personal.js — 个人主页
+ * 依赖 common.js：常量、工具函数、认证、主题、Markdown、上传
+ */
 
-const USER_STORAGE_KEY = "blog_token";
-
-let safeStorage = window.localStorage;
 let personalPosts = [];
-let currentUser = null;
-let ownerUsername = "";
 
-function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-// ========== Markdown + LaTeX 渲染引擎 ==========
-function renderMarkdown(text) {
-  if (!text) return "";
-  const codeBlocks = [];
-  let processed = text.replace(/```[\s\S]*?```/g, (match) => {
-    codeBlocks.push(match);
-    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
-  });
-  processed = processed.replace(/`([^`]+)`/g, (match) => {
-    codeBlocks.push(match);
-    return `@@CODEBLOCK${codeBlocks.length - 1}@@`;
-  });
-  const latexItems = [];
-  processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-    latexItems.push({ type: "block", formula: formula.trim() });
-    return `@@LATEX${latexItems.length - 1}@@`;
-  });
-  processed = processed.replace(/(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)/g, (match, formula) => {
-    latexItems.push({ type: "inline", formula: formula.trim() });
-    return `@@LATEX${latexItems.length - 1}@@`;
-  });
-  marked.setOptions({ breaks: true, gfm: true });
-  let html = marked.parse(processed);
-  latexItems.forEach((item, i) => {
-    try {
-      html = html.replace(`@@LATEX${i}@@`, katex.renderToString(item.formula, {
-        displayMode: item.type === "block", throwOnError: false,
-      }));
-    } catch (e) {
-      html = html.replace(`@@LATEX${i}@@`, escapeHtml(item.formula));
-    }
-  });
-  html = html.replace(/<p>@@CODEBLOCK(\d+)@@<\/p>/g, "@@CODEBLOCK$1@@");
-  codeBlocks.forEach((code, i) => {
-    const escaped = code.replace(/^```(\w*)\n?/, "").replace(/```$/, "").trim();
-    const lang = code.match(/^```(\w*)/)?.[1] || "";
-    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : "";
-    html = html.replace(`@@CODEBLOCK${i}@@`, `<pre>${langLabel}<code>${escapeHtml(escaped)}</code></pre>`);
-  });
-  return html;
-}
-
-function plainTextSummary(markdown, maxLen) {
-  maxLen = maxLen || 200;
-  const div = document.createElement("div");
-  div.innerHTML = renderMarkdown(markdown);
-  const plain = div.textContent || div.innerText || "";
-  return plain.length > maxLen ? plain.slice(0, maxLen) + "..." : plain;
-}
-
-function loadUserSession() {
-  try {
-    const raw = safeStorage.getItem(USER_STORAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      currentUser = {
-        token: data.token,
-        user_id: data.user_id,
-        username: data.username,
-      };
-    }
-  } catch {
-    currentUser = null;
-  }
-}
-
-function saveUserSession(user) {
-  currentUser = {
-    token: user.token,
-    user_id: user.user_id,
-    username: user.username,
-  };
-  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
-}
-
-function clearUserSession() {
-  currentUser = null;
-  safeStorage.removeItem(USER_STORAGE_KEY);
-}
-
-function isLoggedIn() {
-  return Boolean(currentUser && currentUser.user_id);
-}
-
-function getAuthHeaders() {
-  if (isLoggedIn() && currentUser.token) {
-    return { "Authorization": "Bearer " + currentUser.token, "Content-Type": "application/json" };
-  }
-  return { "Content-Type": "application/json" };
-}
-
-function isOwner() {
-  return (
-    isLoggedIn() && ownerUsername && currentUser.username === ownerUsername
-  );
-}
-
-function formatPostDate(dateValue) {
-  if (!dateValue) return "未知";
-  let normalized = dateValue;
-  if (
-    typeof normalized === "string" &&
-    !/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)
-  ) {
-    normalized = normalized.replace(" ", "T") + "Z";
-  }
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) return "未知";
-  return parsed.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-}
-
-function updateAuthUI() {
-  const userArea = document.querySelector("#auth-user-area");
-  const guestArea = document.querySelector("#auth-guest-area");
-  const welcomeEl = document.querySelector("#auth-welcome");
-  const publishSection = document.querySelector("#publish-section");
-  const loginPromptSection = document.querySelector("#login-prompt-section");
-
-  if (isLoggedIn()) {
-    userArea?.classList.remove("hidden");
-    guestArea?.classList.add("hidden");
-    if (welcomeEl) welcomeEl.textContent = `欢迎，${currentUser.username}`;
-    // 只有博主能看到发布表单
-    publishSection?.classList.toggle("hidden", !isOwner());
-    loginPromptSection?.classList.add("hidden");
-  } else {
-    userArea?.classList.add("hidden");
-    guestArea?.classList.remove("hidden");
-    publishSection?.classList.add("hidden");
-    loginPromptSection?.classList.remove("hidden");
-  }
-
-  loadPersonalPosts();
-}
-
+/* ===================================================================
+   API
+   =================================================================== */
 async function loadPersonalPosts() {
   try {
-    const response = await fetch(`${API_BASE}/api/v1/personal`, { headers: getAuthHeaders() });
-    const result = await response.json();
-    if (result.code === 0) {
-      personalPosts = result.data;
-      renderPersonalList();
-    }
-  } catch (e) {
-    console.error("加载个人内容失败:", e);
-  }
+    const r = await fetch(`${API_BASE}/api/v1/personal`, { headers: getAuthHeaders() });
+    const result = await r.json();
+    if (result.code === 0) { personalPosts = result.data; renderPersonalList(); }
+  } catch { /* ignore */ }
 }
 
-function renderPersonalList() {
-  const listContainer = document.querySelector("#personal-list");
-  if (!listContainer) return;
-
-  if (personalPosts.length === 0) {
-    listContainer.innerHTML = `<div class="empty-posts">📝 博主还没有发布任何内容</div>`;
-    return;
-  }
-
-  let html = "";
-  for (const post of personalPosts) {
-    const deleteBtnHtml = isOwner()
-      ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除</button>`
-      : "";
-    const likeBtnClass = post.liked ? "liked" : "";
-    const likeBtnText = post.liked ? "❤️" : "🤍";
-
-    let imagesHtml = "";
-    if (post.image_urls && post.image_urls.length > 0) {
-      imagesHtml = '<div class="image-grid">';
-      for (const imgUrl of post.image_urls) {
-        imagesHtml += `<a href="${escapeHtml(imgUrl)}" target="_blank"><img src="${escapeHtml(imgUrl)}" class="post-thumb" alt="图片" /></a>`;
-      }
-      imagesHtml += "</div>";
-    }
-
-    let filesHtml = "";
-    if (post.file_urls && post.file_urls.length > 0) {
-      filesHtml = '<div class="file-list">';
-      for (const fileUrl of post.file_urls) {
-        const fileName = fileUrl.split("/").pop();
-        filesHtml += `<a href="${escapeHtml(fileUrl)}" class="file-link" download>📎 ${escapeHtml(fileName)}</a>`;
-      }
-      filesHtml += "</div>";
-    }
-
-    html += `
-      <article class="blog-card" data-id="${post.id}">
-        <div class="card-meta">
-          <span>📅 ${formatPostDate(post.created_at)}</span>
-          <span>✍️ ${escapeHtml(post.author)}</span>
-          <span class="like-btn-card ${likeBtnClass}" data-id="${post.id}" data-action="like">${likeBtnText} <span class="like-count">${post.like_count || 0}</span></span>
-          <span class="comment-btn-card" data-id="${post.id}" data-action="comment">💬 ${post.comment_count || 0}</span>
-        </div>
-        <div class="card-content markdown-body">${renderMarkdown(post.content)}</div>
-        ${imagesHtml}
-        ${filesHtml}
-        <div class="card-footer">${deleteBtnHtml}</div>
-      </article>
-    `;
-  }
-
-  listContainer.innerHTML = html;
+async function fetchPersonalComments(postId) {
+  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, { headers: getAuthHeaders() });
+  const result = await r.json();
+  return result.code === 0 ? result.data : [];
 }
 
-/* ========== 认证弹窗 ========== */
-
-function openAuthModal(tab = "login") {
-  document.querySelector("#auth-modal")?.classList.remove("hidden");
-  switchAuthTab(tab);
-  clearAuthErrors();
-}
-
-function closeAuthModal() {
-  document.querySelector("#auth-modal")?.classList.add("hidden");
-  document.querySelector("#login-form")?.reset();
-  document.querySelector("#register-form")?.reset();
-  clearAuthErrors();
-}
-
-function switchAuthTab(tab) {
-  const isLogin = tab === "login";
-  document
-    .querySelector("#auth-tab-login")
-    ?.classList.toggle("active", isLogin);
-  document
-    .querySelector("#auth-tab-register")
-    ?.classList.toggle("active", !isLogin);
-  document.querySelector("#login-form")?.classList.toggle("hidden", !isLogin);
-  document.querySelector("#register-form")?.classList.toggle("hidden", isLogin);
-  clearAuthErrors();
-}
-
-function clearAuthErrors() {
-  for (const id of ["login-error", "register-error"]) {
-    const el = document.querySelector(`#${id}`);
-    if (el) {
-      el.textContent = "";
-      el.classList.add("hidden");
-    }
-  }
-}
-
-function showAuthError(formType, message) {
-  const el = document.querySelector(`#${formType}-error`);
-  if (!el) return;
-  el.textContent = message;
-  el.classList.remove("hidden");
-}
-
-async function loginUser(username, password) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+async function submitPersonalComment(postId, content) {
+  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return null; }
+  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, {
+    method: "POST", headers: getAuthHeaders(),
+    body: JSON.stringify({ content }),
   });
-  return response.json();
+  const result = await r.json();
+  if (result.code !== 0) { alert(result.msg); return null; }
+  return result.data;
 }
-
-async function registerUser(username, password) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  return response.json();
-}
-
-function initAuthInteractions() {
-  document
-    .querySelector("#login-open-btn")
-    ?.addEventListener("click", () => openAuthModal("login"));
-  document
-    .querySelector("#register-open-btn")
-    ?.addEventListener("click", () => openAuthModal("register"));
-  document
-    .querySelector("#login-prompt-btn")
-    ?.addEventListener("click", () => openAuthModal("login"));
-  document
-    .querySelector("#auth-modal-close")
-    ?.addEventListener("click", closeAuthModal);
-
-  document.querySelector("#auth-modal")?.addEventListener("click", (e) => {
-    if (e.target.id === "auth-modal") closeAuthModal();
-  });
-
-  document.querySelector("#logout-btn")?.addEventListener("click", () => {
-    clearUserSession();
-    updateAuthUI();
-  });
-
-  document
-    .querySelector("#auth-tab-login")
-    ?.addEventListener("click", () => switchAuthTab("login"));
-  document
-    .querySelector("#auth-tab-register")
-    ?.addEventListener("click", () => switchAuthTab("register"));
-
-  document
-    .querySelector("#login-form")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearAuthErrors();
-      const username = document.querySelector("#login-username").value.trim();
-      const password = document.querySelector("#login-password").value;
-      try {
-        const result = await loginUser(username, password);
-        if (result.code === 0) {
-          saveUserSession(result.data);
-          closeAuthModal();
-          updateAuthUI();
-        } else {
-          showAuthError("login", result.msg);
-        }
-      } catch {
-        showAuthError("login", "无法连接服务器，请确认后端已启动。");
-      }
-    });
-
-  document
-    .querySelector("#register-form")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearAuthErrors();
-      const username = document
-        .querySelector("#register-username")
-        .value.trim();
-      const password = document.querySelector("#register-password").value;
-      try {
-        const result = await registerUser(username, password);
-        if (result.code === 0) {
-          alert("注册成功，请登录。");
-          switchAuthTab("login");
-          document.querySelector("#login-username").value = username;
-          document.querySelector("#register-form").reset();
-        } else {
-          showAuthError("register", result.msg);
-        }
-      } catch {
-        showAuthError("register", "无法连接服务器，请确认后端已启动。");
-      }
-    });
-}
-
-/* ========== 文件上传 ========== */
-
-async function uploadFile(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await fetch(
-    `${API_BASE}/api/v1/upload`,
-    {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + currentUser.token },
-      body: formData,
-    },
-  );
-  const result = await response.json();
-  if (result.detail) {
-    throw new Error(
-      typeof result.detail === "string"
-        ? result.detail
-        : JSON.stringify(result.detail),
-    );
-  }
-  if (result.code !== 0) {
-    throw new Error(result.msg || "上传失败");
-  }
-  return result.data.url;
-}
-
-async function uploadAllFiles(files) {
-  const urls = [];
-  for (const file of files) {
-    try {
-      const url = await uploadFile(file);
-      urls.push(url);
-      console.log(`✓ ${file.name} 上传成功`);
-    } catch (err) {
-      console.error(`✗ ${file.name} 上传失败:`, err.message);
-      alert(`上传 ${file.name} 失败: ${err.message}`);
-    }
-  }
-  return urls;
-}
-
-/* ========== 点赞与评论 ========== */
 
 async function togglePersonalLike(postId) {
   if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
   try {
     const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/like`, {
-      method: "POST",
-      headers: getAuthHeaders(),
+      method: "POST", headers: getAuthHeaders(),
     });
     const result = await r.json();
     if (result.code === 0) {
@@ -429,230 +48,145 @@ async function togglePersonalLike(postId) {
   } catch { /* ignore */ }
 }
 
-async function fetchPersonalComments(postId) {
-  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`);
-  const result = await r.json();
-  if (result.code === 0) return result.data;
-  return [];
-}
-
-async function submitPersonalComment(postId, content) {
-  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return null; }
-  const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ content }),
-  });
-  const result = await r.json();
-  if (result.code !== 0) { alert(result.msg); return null; }
-  return result.data;
+/* ===================================================================
+   渲染
+   =================================================================== */
+function renderPersonalList() {
+  const list = document.querySelector("#personal-list");
+  if (!list) return;
+  if (!personalPosts.length) { list.innerHTML = '<p class="empty-posts">还没有内容。</p>'; return; }
+  let html = "";
+  for (const post of personalPosts) {
+    let imagesHtml = "";
+    if (post.image_urls?.length) {
+      imagesHtml = '<div class="image-grid">' +
+        post.image_urls.map(u => `<a href="${escapeHtml(u)}" target="_blank"><img src="${escapeHtml(u)}" class="post-thumb" alt="图片" /></a>`).join("") +
+        '</div>';
+    }
+    let filesHtml = "";
+    if (post.file_urls?.length) {
+      filesHtml = '<div class="file-list">' +
+        post.file_urls.map(u => { const n = u.split("/").pop(); return `<a href="${escapeHtml(u)}" class="file-link" download>📎 ${escapeHtml(n)}</a>`; }).join("") +
+        '</div>';
+    }
+    const likeBtnClass = post.liked ? "like-btn-card liked" : "like-btn-card";
+    const likeBtnText = post.liked ? "❤️" : "🤍";
+    const deleteBtnHtml = isOwner() ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除</button>` : "";
+    html += `
+      <article class="blog-card" data-id="${post.id}">
+        <div class="card-meta">
+          <span class="card-author">${escapeHtml(post.author)}</span>
+          <span class="card-date">${formatPostDate(post.created_at)}</span>
+          <span class="${likeBtnClass}" data-id="${post.id}" data-action="like">${likeBtnText} <span class="like-count">${post.like_count || 0}</span></span>
+          <span class="comment-btn-card" data-id="${post.id}" data-action="comment">💬 ${post.comment_count || 0}</span>
+        </div>
+        <div class="card-content markdown-body">${renderMarkdown(post.content)}</div>
+        ${imagesHtml}${filesHtml}
+        <div class="card-footer">${deleteBtnHtml}</div>
+      </article>`;
+  }
+  list.innerHTML = html;
 }
 
 async function openPersonalDetail(postId) {
-  const comments = await fetchPersonalComments(postId);
   const post = personalPosts.find(p => p.id === postId);
-
+  if (!post) return;
+  let comments = [];
+  try { comments = await fetchPersonalComments(postId); } catch { /* */ }
   const modal = document.createElement("div");
   modal.className = "custom-modal-overlay";
   modal.innerHTML = `
     <div class="custom-modal-content">
       <span class="custom-modal-close">×</span>
-      <div class="modal-body-text markdown-body">${renderMarkdown(post?.content || "")}</div>
+      <div class="card-meta">
+        <span>${escapeHtml(post.author)} · ${formatPostDate(post.created_at)}</span>
+      </div>
+      <div class="modal-body markdown-body">${renderMarkdown(post.content)}</div>
       <section class="comments-section">
         <h3 class="comments-title">评论 (${comments.length})</h3>
-        <div class="comments-list">${comments.map(c => `
-          <div class="comment-item">
-            <div class="comment-meta"><strong>${escapeHtml(c.author)}</strong> <span>${formatPostDate(c.created_at)}</span></div>
-            <p class="comment-text markdown-body">${renderMarkdown(c.content)}</p>
-          </div>
-        `).join("") || '<p class="comments-empty">暂无评论</p>'}</div>
-        <form class="comment-form-detail">
-          <textarea class="form-input form-textarea comment-input-detail" placeholder="${isLoggedIn() ? "写下你的评论..." : "登录后可评论"}" rows="2" ${isLoggedIn() ? "" : "disabled"}></textarea>
-          <button type="submit" class="toggle-btn" style="margin-top:8px;" ${isLoggedIn() ? "" : "disabled"}>发表评论</button>
+        <div class="comments-list">${renderCommentsList(comments)}</div>
+        <form class="comment-form2">
+          <textarea class="form-input form-textarea" rows="2" maxlength="500" placeholder="${isLoggedIn() ? "写下你的评论..." : "登录后可评论"}" ${isLoggedIn() ? "" : "disabled"}></textarea>
+          <button type="submit" class="toggle-btn" ${isLoggedIn() ? "" : "disabled"}>发布</button>
         </form>
       </section>
-    </div>
-  `;
+    </div>`;
   document.body.appendChild(modal);
-
-  const close = () => modal.remove();
-  modal.querySelector(".custom-modal-close").addEventListener("click", close);
-  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
-  modal.querySelector(".comment-form-detail")?.addEventListener("submit", async (e) => {
+  modal.querySelector(".custom-modal-close").addEventListener("click", () => modal.remove());
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+  modal.querySelector(".comment-form2").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const input = modal.querySelector(".comment-input-detail");
-    const content = input.value.trim();
-    if (!content) return;
-    const c = await submitPersonalComment(postId, content);
-    if (c) { close(); openPersonalDetail(postId); }
+    if (!isLoggedIn()) { alert("请先登录"); return; }
+    const ta = modal.querySelector("textarea");
+    const c = ta.value.trim();
+    if (!c) return;
+    const newC = await submitPersonalComment(postId, c);
+    if (newC) { comments.push(newC); modal.querySelector(".comments-list").innerHTML = renderCommentsList(comments); modal.querySelector(".comments-title").textContent = `评论 (${comments.length})`; ta.value = ""; }
   });
 }
 
-/* ========== 发布与删除 ========== */
-
-function initPersonalInteractions() {
-  const themeBtn = document.querySelector("#theme-btn");
-  if (safeStorage.getItem("dark_mode_active") === "true") {
-    document.body.classList.add("dark-theme");
-  }
-  themeBtn?.addEventListener("click", () => {
-    document.body.classList.toggle("dark-theme");
-    safeStorage.setItem(
-      "dark_mode_active",
-      document.body.classList.contains("dark-theme"),
-    );
-  });
-
-  // 发布表单（仅博主）
-  document
-    .querySelector("#personal-form")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
+/* ===================================================================
+   交互
+   =================================================================== */
+function initInteractions() {
+  document.querySelector("#personal-list")?.addEventListener("click", async (e) => {
+    const deleteBtn = e.target.closest(".delete-card-btn");
+    if (deleteBtn) {
+      e.stopPropagation();
       if (!isOwner()) return;
-
-      const contentValue = document
-        .querySelector("#personal-content")
-        .value.trim();
-      if (!contentValue) return;
-
-      const imageInput = document.querySelector("#image-input");
-      const fileInput = document.querySelector("#file-input");
-      const imageFiles = imageInput?.files || [];
-      const otherFiles = fileInput?.files || [];
-
-      const imageUrls =
-        imageFiles.length > 0 ? await uploadAllFiles(imageFiles) : [];
-      const fileUrls =
-        otherFiles.length > 0 ? await uploadAllFiles(otherFiles) : [];
-
+      const targetId = deleteBtn.getAttribute("data-id");
+      if (!confirm("确定要删除这条内容吗？")) return;
       try {
-        const response = await fetch(
-          `${API_BASE}/api/v1/personal`,
-          {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-              content: contentValue,
-              image_urls: imageUrls,
-              file_urls: fileUrls,
-            }),
-          },
-        );
-        const result = await response.json();
-        if (result.code === 0) {
-          e.target.reset();
-          const imagePreview = document.querySelector("#image-preview");
-          const filePreview = document.querySelector("#file-preview");
-          if (imagePreview) imagePreview.innerHTML = "";
-          if (filePreview) filePreview.innerHTML = "";
-          await loadPersonalPosts();
-        } else {
-          alert(result.msg);
-        }
-      } catch {
-        alert("无法连接服务器。");
-      }
-    });
-
-  // ========== Markdown 工具栏 ==========
-  const textarea = document.querySelector("#personal-content");
-  if (textarea) {
-    document.querySelectorAll(".md-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const marker = btn.getAttribute("data-md");
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.substring(start, end);
-        let replacement = "";
-        let cursorOffset = 0;
-        if (marker === "```") {
-          replacement = `\n\`\`\`\n${selected || "code"}\n\`\`\`\n`;
-        } else if (marker === "$$\n\n$$") {
-          replacement = `\n\$\$\n${selected || "f(x)"}\n\$\$\n`;
-        } else if (marker === "[text](url)") {
-          replacement = `[${selected || "text"}](url)`;
-        } else if (marker === "**" || marker === "*" || marker === "`" || marker === "$ ") {
-          replacement = `${marker}${selected || marker}${marker}`;
-          cursorOffset = marker.length;
-        } else {
-          replacement = `${marker}${selected || ""}`;
-        }
-        textarea.focus();
-        document.execCommand("insertText", false, replacement);
-        if (cursorOffset && !selected) {
-          const newPos = start + replacement.length;
-          textarea.setSelectionRange(start + cursorOffset, newPos - cursorOffset);
-        }
-      });
-    });
-    textarea.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "b") {
-        e.preventDefault();
-        document.querySelector('.md-btn[data-md="**"]')?.click();
-      }
-      if (e.ctrlKey && e.key === "i") {
-        e.preventDefault();
-        document.querySelector('.md-btn[data-md="*"]')?.click();
-      }
-    });
-  }
-
-  // 卡片交互：删除、点赞、评论
-  document
-    .querySelector("#personal-list")
-    ?.addEventListener("click", async (e) => {
-      if (e.target.classList.contains("delete-card-btn")) {
-        e.stopPropagation();
-        if (!isOwner()) return;
-        const targetId = e.target.getAttribute("data-id");
-        if (!confirm("确定要删除这条内容吗？")) return;
-        try {
-          const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}`, { method: "DELETE", headers: getAuthHeaders() });
-          const result = await r.json();
-          if (result.code === 0) await loadPersonalPosts();
-          else alert(result.msg);
-        } catch { alert("网络错误，删除失败。"); }
-        return;
-      }
-
-      const likeBtn = e.target.closest("[data-action='like']");
-      if (likeBtn) {
-        e.stopPropagation();
-        const postId = parseInt(likeBtn.getAttribute("data-id"));
-        await togglePersonalLike(postId);
-        return;
-      }
-
-      const commentBtn = e.target.closest("[data-action='comment']");
-      if (commentBtn) {
-        e.stopPropagation();
-        const postId = parseInt(commentBtn.getAttribute("data-id"));
-        await openPersonalDetail(postId);
-        return;
-      }
-    });
-}
-
-/* ========== 启动 ========== */
-
-async function loadSiteConfig() {
-  try {
-    const response = await fetch(`${API_BASE}/api/v1/site-config`);
-    const result = await response.json();
-    if (result.code === 0 && result.data) {
-      ownerUsername = result.data.owner_username || "";
+        const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}`, { method: "DELETE", headers: getAuthHeaders() });
+        const result = await r.json();
+        if (result.code === 0) await loadPersonalPosts();
+        else alert(result.msg);
+      } catch { alert("网络错误，删除失败。"); }
+      return;
     }
-  } catch (e) {
-    console.error("加载站点配置失败:", e);
-  }
+    const likeBtn = e.target.closest("[data-action='like']");
+    if (likeBtn) { e.stopPropagation(); await togglePersonalLike(parseInt(likeBtn.getAttribute("data-id"))); return; }
+    const commentBtn = e.target.closest("[data-action='comment']");
+    if (commentBtn) { e.stopPropagation(); await openPersonalDetail(parseInt(commentBtn.getAttribute("data-id"))); return; }
+  });
+
+  document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
+
+  document.querySelector("#personal-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const content = document.querySelector("#personal-content").value.trim();
+    if (!content) return;
+    const imageFiles = document.querySelector("#personal-images")?.files || [];
+    const fileFiles = document.querySelector("#personal-files")?.files || [];
+    let imageUrls = [], fileUrls = [];
+    if (imageFiles.length) { for (const f of imageFiles) { try { imageUrls.push(await uploadFile(f)); } catch (err) { alert(`上传图片失败: ${err.message}`); return; } } }
+    if (fileFiles.length) { for (const f of fileFiles) { try { fileUrls.push(await uploadFile(f)); } catch (err) { alert(`上传文件失败: ${err.message}`); return; } } }
+    try {
+      const r = await fetch(`${API_BASE}/api/v1/personal`, {
+        method: "POST", headers: getAuthHeaders(),
+        body: JSON.stringify({ content, image_urls: imageUrls, file_urls: fileUrls }),
+      });
+      const result = await r.json();
+      if (result.code === 0) { e.target.reset(); await loadPersonalPosts(); }
+      else alert(result.msg);
+    } catch { alert("网络错误"); }
+  });
+
+  initMarkdownToolbar("#personal-content");
 }
 
+/* ===================================================================
+   初始化
+   =================================================================== */
 async function init() {
   loadUserSession();
   initAuthInteractions();
-  initPersonalInteractions();
+  initThemeToggle();
+  initInteractions();
   await loadSiteConfig();
   updateAuthUI();
+  document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
+  await loadPersonalPosts();
 }
 
 init();
