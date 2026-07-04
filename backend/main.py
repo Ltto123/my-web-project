@@ -30,7 +30,7 @@ import bcrypt
 
 
 
-from backend.database import engine, Base, get_db
+from backend.models import engine, Base, get_db
 from backend.auth import create_access_token, get_current_user
 from backend.herb_routes import router as herb_router
 

@@ -9,7 +9,7 @@ from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from backend.database import get_db
+from backend.models import get_db
 from backend import models
 
 # 密钥：生产环境通过环境变量设置，开发环境用默认值

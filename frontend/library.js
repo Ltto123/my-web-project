@@ -15,7 +15,10 @@ async function loadResources(category) {
     const r = await fetch(`${API_BASE}/api/v1/resources${params}`, { headers: getAuthHeaders() });
     const result = await r.json();
     if (result.code === 0) { resources = result.data; renderResourceList(); }
-  } catch { /* ignore */ }
+    else { document.querySelector("#resource-list").innerHTML = `<p class="empty-posts">加载失败：${result.msg}</p>`; }
+  } catch (e) {
+    document.querySelector("#resource-list").innerHTML = `<p class="empty-posts">网络错误：${e.message}</p>`;
+  }
 }
 
 async function uploadResourceFile(file) {
@@ -97,6 +100,20 @@ async function openResourcePreview(resource) {
     </div>`;
   document.body.appendChild(modal);
   modal.querySelector(".custom-modal-close").addEventListener("click", () => modal.remove());
+  const previewImg = modal.querySelector(".preview-img");
+  if (previewImg) {
+    let scale = 1;
+    previewImg.style.transform = `scale(${scale})`;
+    previewImg.style.transformOrigin = "top center";
+    previewImg.style.cursor = "zoom-in";
+    previewImg.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      scale += e.deltaY > 0 ? -0.15 : 0.15;
+      scale = Math.min(Math.max(scale, 0.3), 5);
+      previewImg.style.transform = `scale(${scale})`;
+      previewImg.style.cursor = scale > 1 ? "zoom-out" : "zoom-in";
+    });
+  }
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
 }
 
@@ -139,21 +156,23 @@ function renderResourceList() {
 }
 
 /* ===================================================================
-   分类栏
+   分类栏 — 不替换 innerHTML，只切换 active class
    =================================================================== */
-function initCategoryBar() {
-  const CATEGORIES = ["全部", "PPT", "课件", "学习笔记", "电子书", "其他"];
-  const bar = document.querySelector("#category-bar");
-  if (!bar) return;
-  bar.innerHTML = CATEGORIES.map(c => {
-    const val = c === "全部" ? "" : c;
-    const active = val === currentCategory ? "active" : "";
-    return `<button class="cat-btn ${active}" data-cat="${val}">${c}</button>`;
-  }).join("");
-  bar.querySelectorAll(".cat-btn").forEach(btn => {
-    btn.addEventListener("click", () => { currentCategory = btn.getAttribute("data-cat"); loadResources(currentCategory); initCategoryBar(); });
+function refreshCategoryBar() {
+  document.querySelectorAll("#category-bar .cat-btn").forEach(btn => {
+    const cat = btn.getAttribute("data-cat");
+    btn.classList.toggle("active", cat === currentCategory);
   });
 }
+
+// 事件委托（脚本在 body 底部，DOM 已就绪，直接绑定）
+document.querySelector("#category-bar")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cat-btn");
+  if (!btn) return;
+  currentCategory = btn.getAttribute("data-cat") || "";
+  refreshCategoryBar();
+  loadResources(currentCategory);
+});
 
 /* ===================================================================
    交互
@@ -188,7 +207,7 @@ function initInteractions() {
   document.querySelector("#upload-section")?.classList.toggle("hidden", !isOwner());
   document.querySelector("#resource-form")?.addEventListener("submit", (e) => { e.preventDefault(); submitResource(e.target); });
 
-  initCategoryBar();
+  refreshCategoryBar();
 }
 
 /* ===================================================================

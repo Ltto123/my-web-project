@@ -1,7 +1,30 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint
-from backend.database import Base
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
+
+# ── 数据库连接 ──
+SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+def get_db():
+    """FastAPI 依赖注入：每个请求获取一个数据库会话"""
+    db: Session = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# ── ORM 模型 ──
 
 
 class UserModel(Base):
