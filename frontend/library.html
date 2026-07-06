@@ -4,25 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>资源库 - ltto的博客</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=3" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <header class="blog-header">
       <div class="logo">📚 资源库</div>
       <div class="header-actions">
-        <a
-          href="/"
-          class="toggle-btn toggle-btn-outline"
-          style="text-decoration: none"
-          >← 博客</a
-        >
-        <a
-          href="/personal"
-          class="toggle-btn toggle-btn-outline"
-          style="text-decoration: none"
-          >👤 个人主页</a
-        >
+        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
+        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
         <a href="/herb" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">🌿 中药识别</a>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
@@ -123,7 +114,13 @@
     </main>
 
     <footer class="blog-footer">
-      <p>© 2026 Ltto的乌托邦. Powered by pure Vanilla JS.</p>
+      <p>
+        <a href="/" style="color:inherit;">博客</a> ·
+        <a href="/personal" style="color:inherit;">个人主页</a> ·
+        <a href="/library" style="color:inherit;">资源库</a> ·
+        <a href="/herb" style="color:inherit;">中药识别</a>
+      </p>
+      <p>© 2026 Ltto的乌托邦</p>
     </footer>
 
     <!-- 登录 / 注册弹窗 -->
@@ -205,7 +202,7 @@
       </div>
     </div>
 
-    <script src="common.js?v=1"></script>
-    <script src="library.js?v=3"></script>
+    <script src="common.js?v=3"></script>
+    <script src="library.js?v=4"></script>
   </body>
 </html>

@@ -72,6 +72,34 @@ function showPreview(file, placeholder, previewImg) {
 }
 
 /* ===================================================================
+   粘贴图片
+   =================================================================== */
+function initPasteSupport() {
+  const dropZone = document.querySelector("#herb-drop-zone");
+  if (!dropZone) return;
+  document.addEventListener("paste", (e) => {
+    if (!document.querySelector("#herb-drop-zone")) return; // only on herb page
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        const fileInput = document.querySelector("#herb-file");
+        if (fileInput) {
+          fileInput.files = dt.files;
+          fileInput.dispatchEvent(new Event("change"));
+          showToast("图片已粘贴，点击「开始识别」", "success");
+        }
+        break;
+      }
+    }
+  });
+}
+
+/* ===================================================================
    预测
    =================================================================== */
 async function handlePredict() {
@@ -79,8 +107,8 @@ async function handlePredict() {
   const file = fileInput?.files[0];
   const loadingArea = document.querySelector("#loading-area");
   const resultSection = document.querySelector("#result-section");
-  if (!file) { alert("请先选择一张中药图片"); return; }
-  if (file.size > 10 * 1024 * 1024) { alert("图片大小不能超过 10MB"); return; }
+  if (!file) { showToast("请先选择一张中药图片"); return; }
+  if (file.size > 10 * 1024 * 1024) { showToast("图片大小不能超过 10MB"); return; }
   loadingArea?.classList.remove("hidden");
   resultSection?.classList.add("hidden");
 
@@ -94,10 +122,10 @@ async function handlePredict() {
     const result = await resp.json();
     loadingArea?.classList.add("hidden");
     if (result.code === 0) { renderResult(result.data); resultSection?.classList.remove("hidden"); }
-    else alert("识别失败：" + (result.msg || "未知错误"));
+    else showToast("识别失败：" + (result.msg || "未知错误"));
   } catch (e) {
     loadingArea?.classList.add("hidden");
-    alert("网络请求失败：" + e.message);
+    showToast("网络请求失败：" + e.message);
   }
 }
 
@@ -141,6 +169,7 @@ async function init() {
   await loadSiteConfig();
   updateAuthUI();
   initFilePreview();
+  initPasteSupport();
   document.querySelector("#predict-btn")?.addEventListener("click", handlePredict);
   await renderClassGrid();
 }

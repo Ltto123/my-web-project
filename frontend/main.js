@@ -5,6 +5,7 @@
 
 const HOT_LIKE_THRESHOLD = 1;
 let blogPosts = [];
+let pagination = { page: 1, total_pages: 1, total: 0, search: "" };
 
 /* ===================================================================
    页面特有：博客列表 / 详情 / 评论 / 点赞 / 删除 / 发布 / 搜索
@@ -16,22 +17,31 @@ function canDeletePost(post) {
   return currentUser.username === post.author;
 }
 
-function postsQueryParam() {
-  const params = new URLSearchParams(window.location.search);
-  params.delete("post");
-  return params.toString() ? `?${params.toString()}` : "";
-}
-
 /* ---------- API ---------- */
-async function loadPostsFromServer(search) {
+async function loadPostsFromServer(search, page) {
+  page = page || 1;
+  const grid = document.querySelector("#blog-grid");
+  skeletonCards(6, "#blog-grid");
   try {
-    let url = `${API_BASE}/api/v1/posts`;
-    if (search) url += `?search=${encodeURIComponent(search)}`;
+    let url = `${API_BASE}/api/v1/posts?page=${page}&page_size=15`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
     const response = await fetch(url, { headers: getAuthHeaders() });
     const result = await response.json();
-    if (result.code === 0) { blogPosts = result.data; renderBlogGrid(); }
-    else document.querySelector("#blog-grid").innerHTML = `<p class="empty-posts">加载失败：${result.msg}</p>`;
-  } catch { document.querySelector("#blog-grid").innerHTML = '<p class="empty-posts">网络错误，无法加载文章。</p>'; }
+    if (result.code === 0) {
+      // New paginated format: data.posts + data.total + data.page + data.total_pages
+      blogPosts = result.data.posts || result.data;
+      pagination = {
+        page: result.data.page || 1,
+        total_pages: result.data.total_pages || 1,
+        total: result.data.total || 0,
+        search: search || "",
+      };
+      renderBlogGrid();
+      renderPagination();
+    } else {
+      grid.innerHTML = `<p class="empty-posts">加载失败：${result.msg}</p>`;
+    }
+  } catch { grid.innerHTML = '<p class="empty-posts">网络错误，无法加载文章。</p>'; }
 }
 
 async function fetchPostDetail(postId) {
@@ -58,7 +68,7 @@ function renderBlogGrid() {
   if (!blogPosts.length) { grid.innerHTML = '<p class="empty-posts">还没有文章，博主快写点吧！</p>'; return; }
   let html = "";
   for (const post of blogPosts) {
-    const summary = plainTextSummary(post.content, 150);
+    const preview = typeof convertForPreview === "function" ? convertForPreview(post.content) : plainTextSummary(post.content, 150);
     const hotBadge = post.is_hot ? '<span class="hot-badge">🔥 HOT</span>' : "";
     const deleteBtnHtml = canDeletePost(post)
       ? `<button class="delete-card-btn" data-id="${post.id}">🗑️ 删除</button>`
@@ -71,7 +81,7 @@ function renderBlogGrid() {
           <span class="card-date">${formatPostDate(post.created_at)}</span>
         </div>
         <h2 class="card-title">${escapeHtml(post.title)}</h2>
-        <p class="card-content">${escapeHtml(summary)}</p>
+        <div class="card-content markdown-body card-content-preview">${preview}</div>
         <div class="card-footer">
           <span class="card-stats">
             <span>👍 ${post.like_count || 0}</span>
@@ -84,20 +94,47 @@ function renderBlogGrid() {
   grid.innerHTML = html;
 }
 
-function renderCommentsList(comments) {
-  if (!comments.length) return '<p class="comments-empty">暂无评论，来抢沙发吧～</p>';
-  return comments
-    .map(
-      (comment) => `
-      <div class="comment-item">
-        <div class="comment-meta">
-          <strong>${escapeHtml(comment.author)}</strong>
-          <span>${formatPostDate(comment.created_at)}</span>
-        </div>
-        <p class="comment-text markdown-body">${renderMarkdown(comment.content)}</p>
-      </div>`
-    )
-    .join("");
+function renderPagination() {
+  const container = document.querySelector("#blog-grid");
+  if (!container || pagination.total_pages <= 1) {
+    // Remove existing pagination
+    const old = document.querySelector(".pagination");
+    if (old) old.remove();
+    return;
+  }
+  let old = document.querySelector(".pagination");
+  if (old) old.remove();
+
+  const nav = document.createElement("div");
+  nav.className = "pagination";
+  const p = pagination;
+
+  // Prev
+  nav.innerHTML += `<button class="page-btn" ${p.page <= 1 ? "disabled" : ""}>‹ 上一页</button>`;
+
+  // Page numbers
+  const start = Math.max(1, p.page - 2);
+  const end = Math.min(p.total_pages, p.page + 2);
+  for (let i = start; i <= end; i++) {
+    nav.innerHTML += `<button class="page-btn${i === p.page ? ' active' : ''}" data-page="${i}">${i}</button>`;
+  }
+
+  // Next
+  nav.innerHTML += `<button class="page-btn" ${p.page >= p.total_pages ? "disabled" : ""}>下一页 ›</button>`;
+  nav.innerHTML += `<span class="page-info">共 ${p.total} 篇</span>`;
+
+  nav.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn || btn.disabled) return;
+    if (btn.textContent.includes("上一页")) loadPostsFromServer(p.search, p.page - 1);
+    else if (btn.textContent.includes("下一页")) loadPostsFromServer(p.search, p.page + 1);
+    else {
+      const pg = parseInt(btn.getAttribute("data-page"));
+      if (pg) loadPostsFromServer(p.search, pg);
+    }
+  });
+
+  container.insertAdjacentElement("afterend", nav);
 }
 
 /* ---------- 详情弹窗 ---------- */
@@ -156,26 +193,27 @@ async function openDetailModal(postId) {
 
   const likeBtn = modal.querySelector("#modal-like-btn");
   likeBtn.addEventListener("click", async () => {
-    if (!isLoggedIn()) { alert("请先登录后再点赞。"); openAuthModal("login"); return; }
+    if (!isLoggedIn()) { showToast("请先登录后再点赞。"); openAuthModal("login"); return; }
     try {
       const response = await fetch(`${API_BASE}/api/v1/posts/${postId}/like`, {
         method: "POST",
         headers: getAuthHeaders(),
       });
       const result = await response.json();
-      if (result.code !== 0) { alert(result.msg); return; }
+      if (result.code !== 0) { showToast(result.msg); return; }
       const { like_count, liked, is_hot } = result.data;
       modal.querySelector("#modal-like-count").textContent = like_count;
       likeBtn.classList.toggle("liked", liked);
       likeBtn.textContent = liked ? "❤️ 已点赞" : "🤍 点赞";
       updatePostInList(postId, { like_count, liked, is_hot });
       renderBlogGrid();
-    } catch { alert("网络错误"); }
+      showToast(liked ? "已点赞" : "已取消点赞", "success");
+    } catch { showToast("网络错误"); }
   });
 
   modal.querySelector("#comment-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!isLoggedIn()) { alert("请先登录后再评论。"); openAuthModal("login"); return; }
+    if (!isLoggedIn()) { showToast("请先登录后再评论。"); openAuthModal("login"); return; }
     const input = modal.querySelector("#comment-input");
     const content = input.value.trim();
     if (!content) return;
@@ -186,7 +224,7 @@ async function openDetailModal(postId) {
         body: JSON.stringify({ content }),
       });
       const result = await response.json();
-      if (result.code !== 0) { alert(result.msg); return; }
+      if (result.code !== 0) { showToast(result.msg); return; }
       comments.push(result.data);
       modal.querySelector("#comments-list").innerHTML = renderCommentsList(comments);
       modal.querySelector("#modal-comment-count").textContent = comments.length;
@@ -194,7 +232,8 @@ async function openDetailModal(postId) {
       input.value = "";
       updatePostInList(postId, { comment_count: comments.length });
       renderBlogGrid();
-    } catch { alert("网络错误"); }
+      showToast("评论成功！", "success");
+    } catch { showToast("网络错误"); }
   });
 }
 
@@ -204,15 +243,15 @@ function initInteractions() {
     const deleteBtn = e.target.closest(".delete-card-btn");
     if (deleteBtn) {
       e.stopPropagation();
-      if (!isLoggedIn()) { alert("请先登录后再删除文章。"); openAuthModal("login"); return; }
+      if (!isLoggedIn()) { showToast("请先登录后再删除文章。"); openAuthModal("login"); return; }
       const targetId = deleteBtn.getAttribute("data-id");
       if (!confirm("确定要永久删除这篇文章吗？")) return;
       try {
         const response = await fetch(`${API_BASE}/api/v1/posts/${targetId}`, { method: "DELETE", headers: getAuthHeaders() });
         const result = await response.json();
         if (result.code === 0) await loadPostsFromServer();
-        else alert("删除失败：" + result.msg);
-      } catch { alert("网络错误，删除失败。"); }
+        else showToast("删除失败：" + result.msg);
+      } catch { showToast("网络错误，删除失败。"); }
       return;
     }
     const clickedCard = e.target.closest(".blog-card");
@@ -234,14 +273,14 @@ function initInteractions() {
         body: JSON.stringify({ title, content, author: currentUser.username }),
       });
       const result = await response.json();
-      if (result.code === 0) { e.target.reset(); await loadPostsFromServer(); }
-      else alert("发布失败：" + result.msg);
-    } catch { alert("网络错误"); }
+      if (result.code === 0) { e.target.reset(); await loadPostsFromServer(); showToast("发布成功！", "success"); }
+      else showToast("发布失败：" + result.msg);
+    } catch { showToast("网络错误"); }
   });
 
   document.querySelector("#login-prompt-btn")?.addEventListener("click", () => openAuthModal("login"));
-  document.querySelector("#search-btn")?.addEventListener("click", () => loadPostsFromServer(document.querySelector("#search-input")?.value.trim() || undefined));
-  document.querySelector("#search-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") loadPostsFromServer(e.target.value.trim() || undefined); });
+  document.querySelector("#search-btn")?.addEventListener("click", () => loadPostsFromServer(document.querySelector("#search-input")?.value.trim() || "", 1));
+  document.querySelector("#search-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") loadPostsFromServer(e.target.value.trim() || "", 1); });
 
   initMarkdownToolbar("#post-content");
 }

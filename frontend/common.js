@@ -199,7 +199,29 @@ async function loadSiteConfig() {
 }
 
 /* ===================================================================
-   G. 暗色主题
+   G. 公共导航
+   =================================================================== */
+const NAV_ITEMS = [
+  { href: "/", label: "博客", icon: "📝" },
+  { href: "/personal", label: "个人主页", icon: "👤" },
+  { href: "/library", label: "资源库", icon: "📚" },
+  { href: "/herb", label: "中药识别", icon: "🌿" },
+];
+
+function renderMainNav() {
+  const container = document.querySelector("#main-nav");
+  if (!container) return;
+  const currentPath = window.location.pathname;
+  let html = "";
+  for (const item of NAV_ITEMS) {
+    const isActive = (currentPath === item.href) ? "active" : "";
+    html += `<a href="${item.href}" class="nav-link ${isActive}">${item.icon} ${item.label}</a>`;
+  }
+  container.innerHTML = html;
+}
+
+/* ===================================================================
+   H. 暗色主题
    =================================================================== */
 function initThemeToggle() {
   const btn = document.querySelector("#theme-btn");
@@ -291,6 +313,33 @@ function renderMarkdown(text) {
   return html;
 }
 
+function renderCommentsList(comments) {
+  if (!comments.length) return '<p class="comments-empty">暂无评论，来抢沙发吧～</p>';
+  return comments
+    .map(
+      (comment) => `
+      <div class="comment-item">
+        <div class="comment-meta">
+          <strong>${escapeHtml(comment.author)}</strong>
+          <span>${formatPostDate(comment.created_at)}</span>
+        </div>
+        <p class="comment-text markdown-body">${renderMarkdown(comment.content)}</p>
+      </div>`
+    )
+    .join("");
+}
+
+function convertForPreview(markdown) {
+  // Render full markdown, strip heavy blocks, let CSS line-clamp handle truncation
+  let html = renderMarkdown(markdown);
+  html = html.replace(/<pre[\s\S]*?<\/pre>/g, "");
+  html = html.replace(/<img[\s\S]*?>/g, "");
+  html = html.replace(/<table[\s\S]*?<\/table>/g, "");
+  // Keep h1-h6 as bold text instead of removing
+  html = html.replace(/<\/?h[1-6][^>]*>/g, "");
+  return html;
+}
+
 function plainTextSummary(markdown, maxLen) {
   maxLen = maxLen || 200;
   const div = document.createElement("div");
@@ -331,3 +380,103 @@ function wrapSelection(ta, marker) {
   const t = ta.value;
   ta.value = t.slice(0, s) + marker + t.slice(s, e) + marker + t.slice(e);
 }
+
+/* ===================================================================
+   L. Toast 轻通知
+   =================================================================== */
+function showToast(message, type) {
+  type = type || "error";
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  const icons = { success: "✅", error: "❌", info: "ℹ️" };
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span> ${message}`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("toast-show"));
+  setTimeout(() => {
+    toast.classList.remove("toast-show");
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+/* ===================================================================
+   M. 回到顶部
+   =================================================================== */
+function initBackToTop() {
+  const btn = document.createElement("button");
+  btn.id = "back-to-top";
+  btn.innerHTML = "⬆";
+  btn.title = "回到顶部";
+  document.body.appendChild(btn);
+
+  let ticking = false;
+  window.addEventListener("scroll", () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        btn.classList.toggle("visible", window.scrollY > 500);
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+/* ===================================================================
+   N. 骨架屏
+   =================================================================== */
+function skeletonCards(count, gridSelector) {
+  const grid = document.querySelector(gridSelector);
+  if (!grid) return;
+  let html = "";
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="skeleton-card">
+        <div class="skeleton-line title w60"></div>
+        <div class="skeleton-line w80"></div>
+        <div class="skeleton-line w80"></div>
+        <div class="skeleton-line w40"></div>
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+/* ===================================================================
+   O. 编辑器粘贴图片上传
+   =================================================================== */
+function initEditorPaste() {
+  document.addEventListener("paste", async (e) => {
+    const ta = e.target;
+    if (!ta || !["TEXTAREA"].includes(ta.tagName)) return;
+    // Only for markdown textareas (has placeholder with markdown hints or id containing 'content')
+    if (!ta.placeholder || !ta.placeholder.includes("Markdown")) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        const start = ta.selectionStart;
+        const placeholder = `![上传中...]()`;
+        ta.value = ta.value.slice(0, start) + placeholder + ta.value.slice(ta.selectionEnd);
+        ta.focus();
+        try {
+          const url = await uploadFile(file);
+          ta.value = ta.value.replace(placeholder, `![](${url})`);
+          showToast("图片已插入", "success");
+        } catch (err) {
+          ta.value = ta.value.replace(placeholder, "");
+          showToast("图片上传失败: " + err.message);
+        }
+        break;
+      }
+    }
+  });
+}
+
+// 页面加载时自动渲染公共导航 & 初始化回到顶部 & 编辑器粘贴
+renderMainNav();
+initBackToTop();
+initEditorPaste();

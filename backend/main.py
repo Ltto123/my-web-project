@@ -343,6 +343,8 @@ def get_all_posts(
     current_user: Optional[models.UserModel] = Depends(get_current_user),
 
     search: Optional[str] = Query(None, description="搜索文章标题或内容"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(15, ge=1, le=50, description="每页数量"),
 
     db: Session = Depends(get_db),
 
@@ -359,11 +361,20 @@ def get_all_posts(
             models.PostModel.content.contains(safe_keyword, escape="\\")
         )
 
-    raw_posts = query.all()
+    total = query.count()
+    total_pages = max(1, -(-total // page_size))  # ceil division
+    offset = (page - 1) * page_size
+    raw_posts = query.offset(offset).limit(page_size).all()
 
     serialized_posts = [_serialize_post(db, post, user_id) for post in raw_posts]
 
-    return schemas.HttpResponseSchema(code=0, msg="success", data=serialized_posts)
+    return schemas.HttpResponseSchema(code=0, msg="success", data={
+        "posts": serialized_posts,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    })
 
 
 

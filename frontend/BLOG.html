@@ -4,10 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ltto的博客</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=3" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <!-- KaTeX 数学公式渲染 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
     <!-- marked.js Markdown 渲染 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -17,22 +24,49 @@
     <header class="blog-header">
       <div class="logo">Ltto的乌托邦</div>
       <div class="header-actions">
-        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
-        <a href="/library" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">📚 资源库</a>
-        <a href="/herb" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">🌿 中药识别</a>
+        <a
+          href="/personal"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >👤 个人主页</a
+        >
+        <a
+          href="/library"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >📚 资源库</a
+        >
+        <a
+          href="/herb"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >🌿 中药识别</a
+        >
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
-          <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">
+          <button
+            id="logout-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
             退出登录
           </button>
         </div>
         <div id="auth-guest-area" class="auth-guest-area">
-          <button id="login-open-btn" class="toggle-btn toggle-btn-outline" type="button">
+          <button
+            id="login-open-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
             登录
           </button>
-          <button id="register-open-btn" class="toggle-btn" type="button">注册</button>
+          <button id="register-open-btn" class="toggle-btn" type="button">
+            注册
+          </button>
         </div>
-        <button id="theme-btn" class="toggle-btn" type="button">切换主题</button>
+        <button id="theme-btn" class="toggle-btn" type="button">
+          切换主题
+        </button>
       </div>
     </header>
 
@@ -62,16 +96,61 @@
           </div>
           <div class="form-field">
             <div class="markdown-toolbar">
-              <button type="button" class="md-btn" data-md="**" title="加粗 (Ctrl+B)"><b>B</b></button>
-              <button type="button" class="md-btn" data-md="*" title="斜体 (Ctrl+I)"><i>I</i></button>
-              <button type="button" class="md-btn" data-md="### " title="标题">H</button>
-              <button type="button" class="md-btn" data-md="`" title="行内代码">&lt;/&gt;</button>
-              <button type="button" class="md-btn" data-md="```" title="代码块">```</button>
-              <button type="button" class="md-btn" data-md="> " title="引用">"</button>
-              <button type="button" class="md-btn" data-md="- " title="列表">•</button>
-              <button type="button" class="md-btn" data-md="[text](url)" title="链接">🔗</button>
-              <button type="button" class="md-btn" data-md="$ " title="行内公式">f(x)</button>
-              <button type="button" class="md-btn" data-md="$$\n\n$$" title="块级公式">∑</button>
+              <button
+                type="button"
+                class="md-btn"
+                data-md="**"
+                title="加粗 (Ctrl+B)"
+              >
+                <b>B</b>
+              </button>
+              <button
+                type="button"
+                class="md-btn"
+                data-md="*"
+                title="斜体 (Ctrl+I)"
+              >
+                <i>I</i>
+              </button>
+              <button type="button" class="md-btn" data-md="### " title="标题">
+                H
+              </button>
+              <button type="button" class="md-btn" data-md="`" title="行内代码">
+                &lt;/&gt;
+              </button>
+              <button type="button" class="md-btn" data-md="```" title="代码块">
+                ```
+              </button>
+              <button type="button" class="md-btn" data-md="> " title="引用">
+                "
+              </button>
+              <button type="button" class="md-btn" data-md="- " title="列表">
+                •
+              </button>
+              <button
+                type="button"
+                class="md-btn"
+                data-md="[text](url)"
+                title="链接"
+              >
+                🔗
+              </button>
+              <button
+                type="button"
+                class="md-btn"
+                data-md="$ "
+                title="行内公式"
+              >
+                f(x)
+              </button>
+              <button
+                type="button"
+                class="md-btn"
+                data-md="$$\n\n$$"
+                title="块级公式"
+              >
+                ∑
+              </button>
               <span class="md-hint">支持 Markdown 和 LaTeX 语法</span>
             </div>
             <textarea
@@ -82,17 +161,21 @@
               class="form-input form-textarea"
             ></textarea>
           </div>
-          <button type="submit" class="toggle-btn form-submit-btn">立即发布文章</button>
+          <button type="submit" class="toggle-btn form-submit-btn">
+            立即发布文章
+          </button>
         </form>
       </section>
 
       <section id="login-prompt-section" class="login-prompt-container">
         <p>登录后即可撰写和删除博文</p>
-        <button id="login-prompt-btn" class="toggle-btn" type="button">立即登录</button>
+        <button id="login-prompt-btn" class="toggle-btn" type="button">
+          立即登录
+        </button>
       </section>
       <section class="intro-section">
-        <h1>欢迎来到我的博客网站</h1>
-        <p>本页面由 HTML5 + CSS3 + 原生JavaScript构建 后端使用Python编写</p>
+        <h1>Ltto的乌托邦</h1>
+        <p>喧嚣世上的一隅个人天地</p>
       </section>
 
       <!-- 搜索栏 -->
@@ -103,7 +186,9 @@
           class="search-input"
           placeholder="搜索文章标题或内容..."
         />
-        <button id="search-btn" class="toggle-btn search-btn" type="button">搜索</button>
+        <button id="search-btn" class="toggle-btn search-btn" type="button">
+          搜索
+        </button>
       </div>
 
       <!-- 完全交由 JS 从内存数据中渲染 -->
@@ -112,7 +197,13 @@
 
     <!-- 页脚区 -->
     <footer class="blog-footer">
-      <p>© 2026 Ltto的乌托邦. Powered by pure Vanilla JS.</p>
+      <p>
+        <a href="/" style="color:inherit;">博客</a> ·
+        <a href="/personal" style="color:inherit;">个人主页</a> ·
+        <a href="/library" style="color:inherit;">资源库</a> ·
+        <a href="/herb" style="color:inherit;">中药识别</a>
+      </p>
+      <p>© 2026 Ltto的乌托邦</p>
     </footer>
 
     <!-- 登录 / 注册弹窗 -->
@@ -120,10 +211,20 @@
       <div class="auth-modal-content">
         <span id="auth-modal-close" class="custom-modal-close">×</span>
         <div class="auth-tabs">
-          <button id="auth-tab-login" class="auth-tab active" type="button" data-tab="login">
+          <button
+            id="auth-tab-login"
+            class="auth-tab active"
+            type="button"
+            data-tab="login"
+          >
             登录
           </button>
-          <button id="auth-tab-register" class="auth-tab" type="button" data-tab="register">
+          <button
+            id="auth-tab-register"
+            class="auth-tab"
+            type="button"
+            data-tab="register"
+          >
             注册
           </button>
         </div>
@@ -187,7 +288,7 @@
     </div>
 
     <!-- 引入外部逻辑脚本 JS （放在身体最底部防止阻塞页面骨架加载） -->
-    <script src="common.js?v=1"></script>
-    <script src="main.js?v=4"></script>
+    <script src="common.js?v=3"></script>
+    <script src="main.js?v=6"></script>
   </body>
 </html>

@@ -9,6 +9,7 @@ let personalPosts = [];
    API
    =================================================================== */
 async function loadPersonalPosts() {
+  skeletonCards(4, "#personal-list");
   try {
     const r = await fetch(`${API_BASE}/api/v1/personal`, { headers: getAuthHeaders() });
     const result = await r.json();
@@ -23,18 +24,18 @@ async function fetchPersonalComments(postId) {
 }
 
 async function submitPersonalComment(postId, content) {
-  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return null; }
+  if (!isLoggedIn()) { showToast("请先登录"); openAuthModal("login"); return null; }
   const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/comments`, {
     method: "POST", headers: getAuthHeaders(),
     body: JSON.stringify({ content }),
   });
   const result = await r.json();
-  if (result.code !== 0) { alert(result.msg); return null; }
+  if (result.code !== 0) { showToast(result.msg); return null; }
   return result.data;
 }
 
 async function togglePersonalLike(postId) {
-  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+  if (!isLoggedIn()) { showToast("请先登录"); openAuthModal("login"); return; }
   try {
     const r = await fetch(`${API_BASE}/api/v1/personal/${postId}/like`, {
       method: "POST", headers: getAuthHeaders(),
@@ -44,6 +45,7 @@ async function togglePersonalLike(postId) {
       const post = personalPosts.find(p => p.id === postId);
       if (post) { post.like_count = result.data.like_count; post.liked = result.data.liked; }
       renderPersonalList();
+      showToast(result.data.liked ? "已点赞" : "已取消点赞", "success");
     }
   } catch { /* ignore */ }
 }
@@ -60,7 +62,7 @@ function renderPersonalList() {
     let imagesHtml = "";
     if (post.image_urls?.length) {
       imagesHtml = '<div class="image-grid">' +
-        post.image_urls.map(u => `<a href="${escapeHtml(u)}" target="_blank"><img src="${escapeHtml(u)}" class="post-thumb" alt="图片" /></a>`).join("") +
+        post.image_urls.map(u => `<img src="${escapeHtml(u)}" class="post-thumb" alt="图片" data-full="${escapeHtml(u)}" />`).join("") +
         '</div>';
     }
     let filesHtml = "";
@@ -116,12 +118,12 @@ async function openPersonalDetail(postId) {
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
   modal.querySelector(".comment-form2").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!isLoggedIn()) { alert("请先登录"); return; }
+    if (!isLoggedIn()) { showToast("请先登录"); return; }
     const ta = modal.querySelector("textarea");
     const c = ta.value.trim();
     if (!c) return;
     const newC = await submitPersonalComment(postId, c);
-    if (newC) { comments.push(newC); modal.querySelector(".comments-list").innerHTML = renderCommentsList(comments); modal.querySelector(".comments-title").textContent = `评论 (${comments.length})`; ta.value = ""; }
+    if (newC) { comments.push(newC); modal.querySelector(".comments-list").innerHTML = renderCommentsList(comments); modal.querySelector(".comments-title").textContent = `评论 (${comments.length})`; ta.value = ""; showToast("评论成功！", "success"); }
   });
 }
 
@@ -130,6 +132,19 @@ async function openPersonalDetail(postId) {
    =================================================================== */
 function initInteractions() {
   document.querySelector("#personal-list")?.addEventListener("click", async (e) => {
+    // Lightbox for image clicks
+    const thumb = e.target.closest(".post-thumb");
+    if (thumb) {
+      e.stopPropagation();
+      const src = thumb.getAttribute("data-full") || thumb.src;
+      const overlay = document.createElement("div");
+      overlay.className = "lightbox-overlay";
+      overlay.innerHTML = `<img src="${src}" class="lightbox-img" />`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener("click", () => overlay.remove());
+      document.addEventListener("keydown", function esc(e) { if (e.key === "Escape") { overlay.remove(); document.removeEventListener("keydown", esc); } });
+      return;
+    }
     const deleteBtn = e.target.closest(".delete-card-btn");
     if (deleteBtn) {
       e.stopPropagation();
@@ -140,14 +155,17 @@ function initInteractions() {
         const r = await fetch(`${API_BASE}/api/v1/personal/${targetId}`, { method: "DELETE", headers: getAuthHeaders() });
         const result = await r.json();
         if (result.code === 0) await loadPersonalPosts();
-        else alert(result.msg);
-      } catch { alert("网络错误，删除失败。"); }
+        else showToast(result.msg);
+      } catch { showToast("网络错误，删除失败。"); }
       return;
     }
     const likeBtn = e.target.closest("[data-action='like']");
     if (likeBtn) { e.stopPropagation(); await togglePersonalLike(parseInt(likeBtn.getAttribute("data-id"))); return; }
     const commentBtn = e.target.closest("[data-action='comment']");
     if (commentBtn) { e.stopPropagation(); await openPersonalDetail(parseInt(commentBtn.getAttribute("data-id"))); return; }
+    // Click card body → open detail (same as blog page)
+    const card = e.target.closest(".blog-card");
+    if (card) { await openPersonalDetail(parseInt(card.getAttribute("data-id"))); }
   });
 
   document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
@@ -156,20 +174,20 @@ function initInteractions() {
     e.preventDefault();
     const content = document.querySelector("#personal-content").value.trim();
     if (!content) return;
-    const imageFiles = document.querySelector("#personal-images")?.files || [];
-    const fileFiles = document.querySelector("#personal-files")?.files || [];
+    const imageFiles = document.querySelector("#image-input")?.files || [];
+    const fileFiles = document.querySelector("#file-input")?.files || [];
     let imageUrls = [], fileUrls = [];
-    if (imageFiles.length) { for (const f of imageFiles) { try { imageUrls.push(await uploadFile(f)); } catch (err) { alert(`上传图片失败: ${err.message}`); return; } } }
-    if (fileFiles.length) { for (const f of fileFiles) { try { fileUrls.push(await uploadFile(f)); } catch (err) { alert(`上传文件失败: ${err.message}`); return; } } }
+    if (imageFiles.length) { for (const f of imageFiles) { try { imageUrls.push(await uploadFile(f)); } catch (err) { showToast(`上传图片失败: ${err.message}`); return; } } }
+    if (fileFiles.length) { for (const f of fileFiles) { try { fileUrls.push(await uploadFile(f)); } catch (err) { showToast(`上传文件失败: ${err.message}`); return; } } }
     try {
       const r = await fetch(`${API_BASE}/api/v1/personal`, {
         method: "POST", headers: getAuthHeaders(),
         body: JSON.stringify({ content, image_urls: imageUrls, file_urls: fileUrls }),
       });
       const result = await r.json();
-      if (result.code === 0) { e.target.reset(); await loadPersonalPosts(); }
-      else alert(result.msg);
-    } catch { alert("网络错误"); }
+      if (result.code === 0) { e.target.reset(); await loadPersonalPosts(); showToast("发布成功！", "success"); }
+      else showToast(result.msg);
+    } catch { showToast("网络错误"); }
   });
 
   initMarkdownToolbar("#personal-content");

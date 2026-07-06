@@ -10,28 +10,17 @@ let currentCategory = "";
    API
    =================================================================== */
 async function loadResources(category) {
+  const list = document.querySelector("#resource-list");
+  skeletonCards(6, "#resource-list");
   try {
     const params = category ? `?category=${encodeURIComponent(category)}` : "";
     const r = await fetch(`${API_BASE}/api/v1/resources${params}`, { headers: getAuthHeaders() });
     const result = await r.json();
     if (result.code === 0) { resources = result.data; renderResourceList(); }
-    else { document.querySelector("#resource-list").innerHTML = `<p class="empty-posts">加载失败：${result.msg}</p>`; }
+    else { list.innerHTML = `<p class="empty-posts">加载失败：${result.msg}</p>`; }
   } catch (e) {
-    document.querySelector("#resource-list").innerHTML = `<p class="empty-posts">网络错误：${e.message}</p>`;
+    list.innerHTML = `<p class="empty-posts">网络错误：${e.message}</p>`;
   }
-}
-
-async function uploadResourceFile(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  const r = await fetch(`${API_BASE}/api/v1/upload`, {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + currentUser.token },
-    body: formData,
-  });
-  const result = await r.json();
-  if (result.code !== 0) throw new Error(result.msg || "上传失败");
-  return result.data.url;
 }
 
 async function submitResource(form) {
@@ -39,21 +28,21 @@ async function submitResource(form) {
   const desc = form.querySelector("#resource-desc").value.trim();
   const category = form.querySelector("#resource-category").value;
   const file = form.querySelector("#resource-file")?.files[0];
-  if (!title || !category || !file) { alert("请填写完整信息"); return; }
+  if (!title || !category || !file) { showToast("请填写完整信息"); return; }
   try {
-    const fileUrl = await uploadResourceFile(file);
+    const fileUrl = await uploadFile(file);
     const r = await fetch(`${API_BASE}/api/v1/resources`, {
       method: "POST", headers: getAuthHeaders(),
       body: JSON.stringify({ title, description: desc, category, file_url: fileUrl, file_name: file.name }),
     });
     const result = await r.json();
-    if (result.code === 0) { form.reset(); loadResources(currentCategory); }
-    else alert(result.msg);
-  } catch (err) { alert("上传失败: " + err.message); }
+    if (result.code === 0) { form.reset(); loadResources(currentCategory); showToast("上传成功！", "success"); }
+    else showToast(result.msg);
+  } catch (err) { showToast("上传失败: " + err.message); }
 }
 
 async function toggleResourceStar(resourceId) {
-  if (!isLoggedIn()) { alert("请先登录"); openAuthModal("login"); return; }
+  if (!isLoggedIn()) { showToast("请先登录"); openAuthModal("login"); return; }
   try {
     const r = await fetch(`${API_BASE}/api/v1/resources/${resourceId}/star`, {
       method: "POST", headers: getAuthHeaders(),
@@ -63,6 +52,7 @@ async function toggleResourceStar(resourceId) {
       const resource = resources.find(r => r.id === resourceId);
       if (resource) { resource.star_count = result.data.star_count; resource.starred = result.data.starred; }
       renderResourceList();
+      showToast(result.data.starred ? "已收藏" : "已取消收藏", "success");
     }
   } catch { /* ignore */ }
 }
@@ -117,12 +107,6 @@ async function openResourcePreview(resource) {
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
 }
 
-function renderMarkdownInline(text) {
-  if (!text) return "";
-  text = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>").replace(/`(.+?)`/g, "<code>$1</code>");
-  return text;
-}
-
 /* ===================================================================
    渲染
    =================================================================== */
@@ -144,7 +128,7 @@ function renderResourceList() {
           <span class="star-btn-card ${starClass}" data-id="${r.id}" data-action="star">${starText} <span class="star-count">${r.star_count || 0}</span></span>
         </div>
         <h2 class="card-title">${catIcon} ${escapeHtml(r.title)}</h2>
-        <p class="card-content">${renderMarkdownInline(r.description)}</p>
+        <p class="card-content">${convertForPreview(r.description || "")}</p>
         <span class="category-badge">${escapeHtml(r.category)}</span>
         <div class="card-footer">
           <button class="toggle-btn preview-btn" data-id="${r.id}">👁️ 预览</button>
@@ -159,14 +143,14 @@ function renderResourceList() {
    分类栏 — 不替换 innerHTML，只切换 active class
    =================================================================== */
 function refreshCategoryBar() {
-  document.querySelectorAll("#category-bar .cat-btn").forEach(btn => {
+  document.querySelectorAll(".category-bar .cat-btn").forEach(btn => {
     const cat = btn.getAttribute("data-cat");
     btn.classList.toggle("active", cat === currentCategory);
   });
 }
 
 // 事件委托（脚本在 body 底部，DOM 已就绪，直接绑定）
-document.querySelector("#category-bar")?.addEventListener("click", (e) => {
+document.querySelector(".category-bar")?.addEventListener("click", (e) => {
   const btn = e.target.closest(".cat-btn");
   if (!btn) return;
   currentCategory = btn.getAttribute("data-cat") || "";
@@ -189,8 +173,8 @@ function initInteractions() {
         const r = await fetch(`${API_BASE}/api/v1/resources/${id}`, { method: "DELETE", headers: getAuthHeaders() });
         const result = await r.json();
         if (result.code === 0) loadResources(currentCategory);
-        else alert(result.msg);
-      } catch { alert("网络错误"); }
+        else showToast(result.msg);
+      } catch { showToast("网络错误"); }
       return;
     }
     const starBtn = e.target.closest("[data-action='star']");
