@@ -44,8 +44,14 @@ def _get_client() -> OpenAI:
 
 def _extract_json_from_response(text: str) -> list:
     """从 DeepSeek 响应中提取 JSON 数组"""
-    # Try direct parse first
     text = text.strip()
+
+    # Strip markdown code fences first
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+
+    # Try direct parse
     try:
         result = json.loads(text)
         if isinstance(result, list):
@@ -55,20 +61,29 @@ def _extract_json_from_response(text: str) -> list:
     except json.JSONDecodeError:
         pass
 
-    # Try to find JSON array in response (handles ```json ... ``` wrapping)
-    json_match = re.search(r'\[.*\]', text, re.DOTALL)
+    # Find JSON array with non-greedy bracket matching
+    json_match = re.search(r"\[.*\]", text, re.DOTALL)
     if json_match:
         try:
             return json.loads(json_match.group(0))
         except json.JSONDecodeError:
             pass
 
-    # Try to fix common issues: trailing commas, single quotes
-    cleaned = re.sub(r',\s*([}\]])', r'\1', text)
-    json_match = re.search(r'\[.*\]', cleaned, re.DOTALL)
+    # Fix trailing commas, then retry
+    cleaned = re.sub(r",\s*([}\]])", r"\1", text)
+    json_match = re.search(r"\[.*\]", cleaned, re.DOTALL)
     if json_match:
         try:
             return json.loads(json_match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    # Last resort: try to truncate to last complete object
+    last_brace = text.rfind("}")
+    if last_brace > 0:
+        truncated = text[:last_brace + 1] + "\n]"
+        try:
+            return json.loads(truncated)
         except json.JSONDecodeError:
             pass
 
@@ -87,8 +102,8 @@ def parse_and_complete(file_content: str) -> list[dict]:
     """
     client = _get_client()
 
-    # Truncate very large files (max ~8000 words worth of text)
-    max_chars = 50000
+    # Truncate very large files
+    max_chars = 80000
     if len(file_content) > max_chars:
         file_content = file_content[:max_chars] + "\n...[内容已截断]"
 
@@ -99,8 +114,8 @@ def parse_and_complete(file_content: str) -> list[dict]:
             {"role": "user", "content": f"请解析以下单词文件内容，提取并补全所有单词：\n\n{file_content}"}
         ],
         temperature=0.3,
-        max_tokens=16000,
-        timeout=60,
+        max_tokens=32000,
+        timeout=120,
     )
 
     raw = response.choices[0].message.content or ""

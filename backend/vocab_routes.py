@@ -2,6 +2,7 @@
 不背单词 API 路由 — 单词集管理 + 文件上传解析 + 学习进度
 """
 from datetime import datetime, timezone
+import io
 import os
 from pathlib import Path
 from typing import Optional
@@ -26,6 +27,34 @@ def _is_owner(user) -> bool:
 router = APIRouter(prefix="/api/v1/vocab", tags=["vocab"])
 
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+def _extract_text(contents: bytes, filename: str) -> str:
+    """从任意文件提取文本 — PDF 用 PyPDF2，其他直接解码，全交给 DeepSeek 处理"""
+    ext = Path(filename).suffix.lower()
+
+    # PDF: extract text properly (binary format, can't just decode)
+    if ext == ".pdf":
+        from PyPDF2 import PdfReader
+        reader = PdfReader(io.BytesIO(contents))
+        pages = []
+        for page in reader.pages:
+            t = page.extract_text()
+            if t and t.strip():
+                pages.append(t)
+        if not pages:
+            raise ValueError("PDF 中未提取到文字内容，请确认 PDF 包含文字而非扫描图片")
+        return "\n\n".join(pages)
+
+    # Text-based files: try common encodings
+    for encoding in ["utf-8", "gbk"]:
+        try:
+            return contents.decode(encoding)
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+
+    # Unknown binary (not PDF): best-effort
+    return contents.decode("utf-8", errors="replace")
 
 
 def _serialize_word(w: models.VocabWordModel) -> dict:
@@ -123,16 +152,11 @@ async def upload_vocab_set(
     if len(contents) > MAX_FILE_SIZE:
         return schemas.HttpResponseSchema(code=400, msg="文件大小不能超过 5MB", data=None)
 
-    # Try to decode as text — don't reject, just pass everything to DeepSeek
-    for encoding in ["utf-8", "gbk"]:
-        try:
-            file_text = contents.decode(encoding)
-            break
-        except (UnicodeDecodeError, UnicodeError):
-            continue
-    else:
-        # Binary file (e.g. PDF) — extract readable text as best-effort
-        file_text = contents.decode("utf-8", errors="replace")
+    # Extract text — PyPDF2 for PDFs, direct decode for text files
+    try:
+        file_text = _extract_text(contents, file.filename)
+    except ValueError as e:
+        return schemas.HttpResponseSchema(code=400, msg=str(e), data=None)
 
     # Call DeepSeek to parse and complete
     try:
