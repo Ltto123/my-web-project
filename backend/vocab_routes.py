@@ -123,14 +123,16 @@ async def upload_vocab_set(
     if len(contents) > MAX_FILE_SIZE:
         return schemas.HttpResponseSchema(code=400, msg="文件大小不能超过 5MB", data=None)
 
-    # Try to decode file content
-    try:
-        file_text = contents.decode("utf-8")
-    except UnicodeDecodeError:
+    # Try to decode as text — don't reject, just pass everything to DeepSeek
+    for encoding in ["utf-8", "gbk"]:
         try:
-            file_text = contents.decode("gbk")
-        except UnicodeDecodeError:
-            return schemas.HttpResponseSchema(code=400, msg="无法识别文件编码，请使用 UTF-8 或 GBK", data=None)
+            file_text = contents.decode(encoding)
+            break
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    else:
+        # Binary file (e.g. PDF) — extract readable text as best-effort
+        file_text = contents.decode("utf-8", errors="replace")
 
     # Call DeepSeek to parse and complete
     try:
