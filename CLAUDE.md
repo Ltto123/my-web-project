@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-这是 **Ltto 的个人博客**，一个全栈 Web 应用。包含博客文章、个人主页、资源库、中药识别四大模块。
+这是 **Ltto 的个人博客**，一个全栈 Web 应用。包含博客文章、个人主页、资源库、中药识别、不背单词五大模块。
 
 - **博主**: Ltto123（通过 `.env` 的 `BLOG_OWNER_USERNAME` 配置）
 - **数据库**: SQLite（`blog.db`，项目根目录）
@@ -38,7 +38,9 @@
 │   ├── auth.py          # JWT 签发、验证、get_current_user 依赖
 │   ├── herb_routes.py   # 中药识别 API 路由
 │   ├── herb_model.py    # 中药识别 PyTorch 模型推理
-│   └── herb_model_data/ # 训练好的模型权重文件
+│   ├── herb_model_data/ # 训练好的模型权重文件
+│   ├── vocab_ai.py      # 不背单词 — DeepSeek AI 单词解析与补全
+│   └── vocab_routes.py  # 不背单词 API 路由（词集CRUD/学习进度）
 ├── frontend/
 │   ├── BLOG.html        # 博客首页
 │   ├── personal.html    # 个人主页
@@ -49,6 +51,8 @@
 │   ├── personal.js      # 个人主页 JS
 │   ├── library.js       # 资源库 JS
 │   ├── herb.js          # 中药识别页 JS
+│   ├── VOCAB.html        # 不背单词页
+│   ├── vocab.js          # 不背单词 JS（卡片学习/拼写测试）
 │   ├── style.css        # 全局样式（CSS 变量化）
 │   └── favicon.svg      # 网站图标
 ├── uploads/             # 用户上传文件（按 YYYYMM 分目录）
@@ -63,7 +67,7 @@
 
 ---
 
-## 数据库表结构（10 张表）
+## 数据库表结构（13 张表）
 
 | 表名 | 模型类 | 用途 |
 |------|--------|------|
@@ -77,6 +81,9 @@
 | `resources` | ResourceModel | 资源库文件 |
 | `resource_stars` | ResourceStarModel | 资源收藏 |
 | `herb_records` | （herb_routes 中） | 中药识别记录 |
+| `vocab_sets` | VocabSetModel | 不背单词 — 单词集 |
+| `vocab_words` | VocabWordModel | 不背单词 — 单词（含释义/例句/词性） |
+| `vocab_progress` | VocabProgressModel | 不背单词 — 用户学习进度（stage/correct/wrong/spelling） |
 
 ---
 
@@ -135,6 +142,14 @@ docker-compose up -d
 | POST | `/api/v1/herb/predict` | 中药图片识别 | 可选 |
 | GET | `/api/v1/herb/models` | 可用 AI 模型列表 | 无 |
 | GET | `/api/v1/herb/classes` | 可识别中药列表 | 无 |
+| GET | `/api/v1/vocab/sets` | 单词集列表 | 可选 |
+| GET | `/api/v1/vocab/sets/{id}` | 单词集详情（含所有单词） | 无 |
+| POST | `/api/v1/vocab/sets/upload` | 上传单词文件（AI解析） | 必须 |
+| DELETE | `/api/v1/vocab/sets/{id}` | 删除单词集 | 上传者/博主 |
+| GET | `/api/v1/vocab/progress/{set_id}` | 获取学习进度 | 必须 |
+| POST | `/api/v1/vocab/progress` | 更新单词进度 | 必须 |
+| POST | `/api/v1/vocab/progress/spell` | 标记拼写通过 | 必须 |
+| POST | `/api/v1/vocab/progress/reset/{set_id}` | 重置学习进度 | 必须 |
 | GET | `/api/v1/site-config` | 站点配置 | 无 |
 | GET | `/api/v1/health` | 健康检查 | 无 |
 
@@ -146,6 +161,7 @@ docker-compose up -d
 | `/personal` | personal.html | 个人主页 |
 | `/library` | library.html | 资源库 |
 | `/herb` | HERB.html | 中药识别 |
+| `/vocab` | VOCAB.html | 不背单词 |
 
 **注意**: 前端静态文件在 `main.py` 最底部通过 `app.mount("/", StaticFiles(...))` 挂载，所以新增前端文件不需要改路由。但 HTML 页面本身在 `@app.get("/xxx")` 中显式返回 `FileResponse`。
 
@@ -180,3 +196,54 @@ docker-compose up -d
 4. **中药模型的三个选项**：ResNet50、EfficientNet-B3、MobileNetV3-Large，默认用 MobileNetV3-Large
 5. **博主权限**：删除任意文章、发布个人动态、上传资源/文件
 6. **普通用户**：只能删自己的文章，可以点赞/评论/收藏
+
+---
+
+## 新功能上线前测试协议
+
+**每个新功能开发完成后，必须在云服务器上跑端到端测试，然后清理测试数据。**
+
+### 测试流程
+
+1. **在服务器上注册一个测试用户**（`test_<feature>_runner`）
+2. **登录获取 token**
+3. **构造测试数据**（如单词文件、图片等），调 API 完成核心链路
+4. **验证返回结果**是否正确、完整
+5. **清理所有测试痕迹**：
+   - 通过 API 删除测试创建的业务数据
+   - 通过 SSH 直连 SQLite 删除测试用户：
+     ```bash
+     ssh root@106.14.218.12 "cd /opt/blog && /opt/blog/.venv/bin/python -c \"
+     import sqlite3; conn = sqlite3.connect('blog.db'); c = conn.cursor()
+     c.execute('DELETE FROM <related_table> WHERE user_id=X')
+     c.execute('DELETE FROM users WHERE id=X')
+     conn.commit(); conn.close()
+     \""
+     ```
+6. **清理本地临时文件**（`/tmp/test_*`）
+
+### 部署前检查
+
+- [ ] 本地 Python 语法检查通过（所有 `.py` 文件 `py_compile`）
+- [ ] `requirements.txt` 已更新（如有新依赖）
+- [ ] 服务器依赖已安装（`pip install` 新包）
+- [ ] 服务器 `.env` 已补全新增的环境变量
+- [ ] `docker-compose.yml` 已更新（如有新环境变量/卷挂载）
+- [ ] 新页面已注册到 `main.py` 的 `@app.get()` 路由
+- [ ] 所有 HTML 页面的导航栏和页脚包含新页面的入口链接
+- [ ] 端到端测试已通过并清理完毕
+
+### 部署命令
+
+```bash
+# 全量部署（前端 + 后端）
+bash deploy.sh -a
+
+# 仅前端
+bash deploy.sh
+
+# 仅后端（会重启服务）
+bash deploy.sh -b
+```
+
+**服务器**: `root@106.14.218.12`，SSH key: `~/.ssh/id_ed25519`
