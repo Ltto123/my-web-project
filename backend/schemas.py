@@ -48,3 +48,50 @@ class PersonalCommentCreateSchema(BaseModel):
 
 class StarToggleSchema(BaseModel):
     pass  # 保留占位，兼容其他可能的引用
+
+
+# ── 不背单词 Vocab Schemas ──
+
+
+class VocabWordOut(BaseModel):
+    id: int
+    word: str
+    pos: Optional[str] = None
+    def_en: Optional[str] = None
+    def_zh: Optional[str] = None
+    example_en: Optional[str] = None
+    example_zh: Optional[str] = None
+    is_phrase: int = 0
+    sort_order: int = 0
+
+
+class VocabSetOut(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    word_count: int = 0
+    user_id: Optional[int] = None
+    created_at: Optional[str] = None
+
+
+class VocabSetDetailOut(VocabSetOut):
+    words: List[VocabWordOut] = []
+
+
+class VocabProgressOut(BaseModel):
+    word_id: int
+    stage: int = 0
+    correct_count: int = 0
+    wrong_count: int = 0
+    spelling_passed: int = 0
+
+
+class VocabProgressUpdate(BaseModel):
+    word_id: int
+    stage: int = 0
+    correct_count: int = 0
+    wrong_count: int = 0
+
+
+class VocabSpellUpdate(BaseModel):
+    word_id: int

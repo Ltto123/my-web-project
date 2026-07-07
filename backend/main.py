@@ -33,6 +33,7 @@ import bcrypt
 from backend.models import engine, Base, get_db
 from backend.auth import create_access_token, get_current_user
 from backend.herb_routes import router as herb_router
+from backend.vocab_routes import router as vocab_router
 
 import backend.models as models
 
@@ -246,6 +247,7 @@ app = FastAPI(title="Blog System API")
 
 # 注册中药识别路由（必须在静态文件挂载之前）
 app.include_router(herb_router)
+app.include_router(vocab_router)
 
 
 
@@ -1040,6 +1042,11 @@ def serve_library():
 @app.get("/herb")
 def serve_herb():
     return FileResponse(FRONTEND_DIR / "HERB.html")
+
+
+@app.get("/vocab")
+def serve_vocab():
+    return FileResponse(FRONTEND_DIR / "VOCAB.html")
 
 
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")

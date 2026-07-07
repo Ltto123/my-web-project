@@ -123,3 +123,47 @@ class ResourceStarModel(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
 
     __table_args__ = (UniqueConstraint("resource_id", "user_id", name="uq_resource_user_star"),)
+
+
+# ── 不背单词 Vocab Models ──
+
+
+class VocabSetModel(Base):
+    __tablename__ = "vocab_sets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    word_count = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+
+
+class VocabWordModel(Base):
+    __tablename__ = "vocab_words"
+
+    id = Column(Integer, primary_key=True, index=True)
+    set_id = Column(Integer, ForeignKey("vocab_sets.id", ondelete="CASCADE"), nullable=False, index=True)
+    word = Column(String(100), nullable=False)
+    pos = Column(String(30), nullable=True)
+    def_en = Column(Text, nullable=True)
+    def_zh = Column(Text, nullable=True)
+    example_en = Column(Text, nullable=True)
+    example_zh = Column(Text, nullable=True)
+    is_phrase = Column(Integer, default=0)  # 0=word, 1=phrase
+    sort_order = Column(Integer, default=0)
+
+
+class VocabProgressModel(Base):
+    __tablename__ = "vocab_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    word_id = Column(Integer, ForeignKey("vocab_words.id", ondelete="CASCADE"), nullable=False, index=True)
+    stage = Column(Integer, default=0)  # 0=needs review, 1=mastered
+    correct_count = Column(Integer, default=0)
+    wrong_count = Column(Integer, default=0)
+    spelling_passed = Column(Integer, default=0)  # 0/1
+    last_reviewed = Column(Integer, default=0)  # unix timestamp ms
+
+    __table_args__ = (UniqueConstraint("user_id", "word_id", name="uq_user_word_progress"),)

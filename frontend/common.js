@@ -205,6 +205,7 @@ const NAV_ITEMS = [
   { href: "/", label: "博客", icon: "📝" },
   { href: "/personal", label: "个人主页", icon: "👤" },
   { href: "/library", label: "资源库", icon: "📚" },
+  { href: "/vocab", label: "不背单词", icon: "📖" },
   { href: "/herb", label: "中药识别", icon: "🌿" },
 ];
 
