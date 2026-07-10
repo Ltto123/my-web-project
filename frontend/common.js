@@ -188,7 +188,17 @@ function updateAuthUI() {
     userArea?.classList.add("hidden");
     guestArea?.classList.remove("hidden");
   }
+  // Notify all page scripts that auth state changed (they should re-render)
+  document.dispatchEvent(new CustomEvent("auth-changed"));
 }
+
+// Cross-tab auth sync: when user logs in/out on another tab, update this tab too
+window.addEventListener("storage", (e) => {
+  if (e.key === USER_STORAGE_KEY) {
+    loadUserSession();
+    updateAuthUI();
+  }
+});
 
 async function loadSiteConfig() {
   try {
@@ -387,6 +397,8 @@ function wrapSelection(ta, marker) {
    =================================================================== */
 function showToast(message, type) {
   type = type || "error";
+  // Remove existing toasts to prevent stacking
+  document.querySelectorAll(".toast").forEach(t => { t.classList.remove("toast-show"); setTimeout(() => t.remove(), 300); });
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   const icons = { success: "✅", error: "❌", info: "ℹ️" };

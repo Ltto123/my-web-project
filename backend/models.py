@@ -10,6 +10,15 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
+# Enable WAL mode for concurrent read/write (background threads + HTTP requests)
+from sqlalchemy import event
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -137,6 +146,8 @@ class VocabSetModel(Base):
     word_count = Column(Integer, default=0)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+    status = Column(String(20), default="completed")  # pending/processing/completed/error
+    error_message = Column(Text, nullable=True)
 
 
 class VocabWordModel(Base):

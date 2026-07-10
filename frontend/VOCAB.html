@@ -6,137 +6,567 @@
     <title>不背单词 - ltto的博客</title>
     <link rel="stylesheet" href="style.css?v=4" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       /* ═══════════ Vocab Flashcard & Learning Styles ═══════════ */
-      .vocab-card-scene{perspective:1200px;width:100%;max-width:560px;min-height:340px;margin:0 auto}
-      .vocab-card-inner{position:relative;width:100%;height:100%;min-height:320px;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1);transform-style:preserve-3d}
-      .vocab-card-inner.flipped{transform:rotateY(180deg)}
-      .vocab-card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius-lg);background:var(--c-surface);border:1px solid var(--c-border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 32px;overflow-y:auto;box-shadow:var(--shadow-md)}
-      .vocab-card-back{transform:rotateY(180deg)}
-      .vocab-word-big{font-family:var(--font-heading);font-size:48px;font-weight:700;color:var(--c-text);margin-bottom:6px;text-align:center;letter-spacing:1px}
-      .vocab-pos-tag{font-size:14px;color:var(--c-text-3);margin-bottom:8px;background:var(--c-bg);padding:3px 14px;border-radius:var(--radius-pill)}
-      .vocab-phrase-tag{font-size:12px;color:var(--c-primary);margin-bottom:16px;background:var(--c-primary-light);padding:2px 12px;border-radius:var(--radius-pill)}
-      .vocab-def-zh{font-size:22px;font-weight:600;text-align:center;line-height:1.5;color:var(--c-primary)}
-      .vocab-def-en{font-size:14px;color:var(--c-text-2);text-align:center;line-height:1.6;margin-top:8px;max-width:90%}
-      .vocab-example-box{margin-top:20px;padding:14px 18px;border-left:3px solid var(--c-primary);background:var(--c-bg);border-radius:0 var(--radius-sm) var(--radius-sm) 0;width:100%;max-width:90%}
-      .vocab-example-label{font-size:11px;color:var(--c-primary);font-weight:600;margin-bottom:4px}
-      .vocab-example-en{font-size:14px;color:var(--c-text);line-height:1.6;font-style:italic}
-      .vocab-example-zh{font-size:13px;color:var(--c-text-3);margin-top:4px}
-      .vocab-know-buttons{display:flex;gap:12px;margin-top:24px;width:100%;max-width:320px}
-      .vocab-know-btn{flex:1;padding:14px 20px;border-radius:var(--radius-pill);border:2px solid var(--c-border);background:var(--c-surface);color:var(--c-text);font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s ease;font-family:var(--font)}
-      .vocab-know-btn:hover{transform:translateY(-2px)}
-      .vocab-know-btn.know{border-color:var(--c-success);color:var(--c-success)}
-      .vocab-know-btn.know:hover{background:var(--c-primary-light);box-shadow:0 4px 16px rgba(26,122,90,0.15)}
-      .vocab-know-btn.unknown{border-color:var(--c-danger);color:var(--c-danger)}
-      .vocab-know-btn.unknown:hover{background:var(--c-danger-bg);box-shadow:0 4px 16px rgba(220,53,69,0.15)}
-      .vocab-rating-row{display:flex;gap:10px;padding:16px 0 4px;width:100%;max-width:320px;margin:0 auto;opacity:0;transform:translateY(10px);transition:all 0.35s ease}
-      .vocab-rating-row.visible{opacity:1;transform:translateY(0)}
-      .vocab-rate-btn{flex:1;padding:14px 8px;border-radius:var(--radius-pill);border:1px solid var(--c-border);background:var(--c-surface);color:var(--c-text);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;font-family:var(--font)}
-      .vocab-rate-btn:hover{transform:translateY(-2px)}
-      .vocab-rate-btn.again{color:#d4952a;border-color:rgba(212,149,42,0.3)}
-      .vocab-rate-btn.again:hover{background:rgba(212,149,42,0.1)}
-      .vocab-rate-btn.pass{color:var(--c-success);border-color:rgba(26,122,90,0.3)}
-      .vocab-rate-btn.pass:hover{background:var(--c-primary-light)}
+      .vocab-card-scene {
+        perspective: 1200px;
+        width: 100%;
+        max-width: 560px;
+        min-height: 340px;
+        margin: 0 auto;
+      }
+      .vocab-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 320px;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-style: preserve-3d;
+      }
+      .vocab-card-inner.flipped {
+        transform: rotateY(180deg);
+      }
+      .vocab-card-face {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        border-radius: var(--radius-lg);
+        background: var(--c-surface);
+        border: 1px solid var(--c-border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 36px 32px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-md);
+      }
+      .vocab-card-back {
+        transform: rotateY(180deg);
+      }
+      .vocab-word-big {
+        font-family: var(--font-heading);
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--c-text);
+        margin-bottom: 6px;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+      .vocab-pos-tag {
+        font-size: 14px;
+        color: var(--c-text-3);
+        margin-bottom: 8px;
+        background: var(--c-bg);
+        padding: 3px 14px;
+        border-radius: var(--radius-pill);
+      }
+      .vocab-phrase-tag {
+        font-size: 12px;
+        color: var(--c-primary);
+        margin-bottom: 16px;
+        background: var(--c-primary-light);
+        padding: 2px 12px;
+        border-radius: var(--radius-pill);
+      }
+      .vocab-def-zh {
+        font-size: 22px;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.5;
+        color: var(--c-primary);
+      }
+      .vocab-def-en {
+        font-size: 14px;
+        color: var(--c-text-2);
+        text-align: center;
+        line-height: 1.6;
+        margin-top: 8px;
+        max-width: 90%;
+      }
+      .vocab-example-box {
+        margin-top: 20px;
+        padding: 14px 18px;
+        border-left: 3px solid var(--c-primary);
+        background: var(--c-bg);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        width: 100%;
+        max-width: 90%;
+      }
+      .vocab-example-label {
+        font-size: 11px;
+        color: var(--c-primary);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .vocab-example-en {
+        font-size: 14px;
+        color: var(--c-text);
+        line-height: 1.6;
+        font-style: italic;
+      }
+      .vocab-example-zh {
+        font-size: 13px;
+        color: var(--c-text-3);
+        margin-top: 4px;
+      }
+      .vocab-know-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        width: 100%;
+        max-width: 320px;
+      }
+      .vocab-know-btn {
+        flex: 1;
+        padding: 14px 20px;
+        border-radius: var(--radius-pill);
+        border: 2px solid var(--c-border);
+        background: var(--c-surface);
+        color: var(--c-text);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+      }
+      .vocab-know-btn:hover {
+        transform: translateY(-2px);
+      }
+      .vocab-know-btn.know {
+        border-color: var(--c-success);
+        color: var(--c-success);
+      }
+      .vocab-know-btn.know:hover {
+        background: var(--c-primary-light);
+        box-shadow: 0 4px 16px rgba(26, 122, 90, 0.15);
+      }
+      .vocab-know-btn.unknown {
+        border-color: var(--c-danger);
+        color: var(--c-danger);
+      }
+      .vocab-know-btn.unknown:hover {
+        background: var(--c-danger-bg);
+        box-shadow: 0 4px 16px rgba(220, 53, 69, 0.15);
+      }
+      .vocab-rating-row {
+        display: flex;
+        gap: 10px;
+        padding: 16px 0 4px;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.35s ease;
+      }
+      .vocab-rating-row.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .vocab-rate-btn {
+        flex: 1;
+        padding: 14px 8px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--c-border);
+        background: var(--c-surface);
+        color: var(--c-text);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+      }
+      .vocab-rate-btn:hover {
+        transform: translateY(-2px);
+      }
+      .vocab-rate-btn.again {
+        color: var(--c-amber);
+        border-color: var(--c-amber);
+      }
+      .vocab-rate-btn.again:hover {
+        background: rgba(212, 149, 42, 0.1);
+      }
+      .vocab-rate-btn.pass {
+        color: var(--c-success);
+        border-color: var(--c-primary);
+      }
+      .vocab-rate-btn.pass:hover {
+        background: var(--c-primary-light);
+      }
       /* Spelling */
-      .vocab-spelling-area{display:flex;flex-direction:column;align-items:center;gap:20px;max-width:460px;margin:0 auto;width:100%}
-      .vocab-spell-input{width:100%;max-width:380px;padding:16px 22px;border-radius:var(--radius-pill);border:2px solid var(--c-border);background:var(--c-surface);color:var(--c-text);font-size:22px;text-align:center;font-family:var(--font-heading);outline:none;transition:border-color var(--transition);letter-spacing:2px}
-      .vocab-spell-input:focus{border-color:var(--c-primary)}
-      .vocab-spell-input.correct{border-color:var(--c-success);background:var(--c-primary-light)}
-      .vocab-spell-input.wrong{border-color:var(--c-danger);animation:vocab-shake 0.5s ease;background:var(--c-danger-bg)}
-      @keyframes vocab-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-      .vocab-spell-result{font-size:17px;font-weight:600;text-align:center;min-height:26px}
-      .vocab-spell-result.correct{color:var(--c-success)}
-      .vocab-spell-result.wrong{color:var(--c-danger)}
+      .vocab-spelling-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        max-width: 460px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .vocab-spell-input {
+        width: 100%;
+        max-width: 380px;
+        padding: 16px 22px;
+        border-radius: var(--radius-pill);
+        border: 2px solid var(--c-border);
+        background: var(--c-surface);
+        color: var(--c-text);
+        font-size: 22px;
+        text-align: center;
+        font-family: var(--font-heading);
+        outline: none;
+        transition: border-color var(--transition);
+        letter-spacing: 2px;
+      }
+      .vocab-spell-input:focus {
+        border-color: var(--c-primary);
+      }
+      .vocab-spell-input.correct {
+        border-color: var(--c-success);
+        background: var(--c-primary-light);
+      }
+      .vocab-spell-input.wrong {
+        border-color: var(--c-danger);
+        animation: vocab-shake 0.5s ease;
+        background: var(--c-danger-bg);
+      }
+      @keyframes vocab-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+      .vocab-spell-result {
+        font-size: 17px;
+        font-weight: 600;
+        text-align: center;
+        min-height: 26px;
+      }
+      .vocab-spell-result.correct {
+        color: var(--c-success);
+      }
+      .vocab-spell-result.wrong {
+        color: var(--c-danger);
+      }
       /* Mode tabs */
-      .vocab-mode-tabs{display:flex;gap:8px;margin-bottom:20px}
-      .vocab-mode-tab{padding:8px 20px;border-radius:var(--radius-pill);border:1px solid var(--c-border);background:var(--c-surface);color:var(--c-text-2);font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s ease;font-family:var(--font)}
-      .vocab-mode-tab.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
-      .vocab-mode-tab:hover:not(.active){border-color:var(--c-primary);color:var(--c-primary)}
+      .vocab-mode-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .vocab-mode-tab {
+        padding: 8px 20px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--c-border);
+        background: var(--c-surface);
+        color: var(--c-text-2);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: var(--font);
+      }
+      .vocab-mode-tab.active {
+        background: var(--c-primary);
+        color: white;
+        border-color: var(--c-primary);
+      }
+      .vocab-mode-tab:hover:not(.active) {
+        border-color: var(--c-primary);
+        color: var(--c-primary);
+      }
+      .vocab-mode-tab:active {
+        transform: scale(0.97);
+      }
+      .vocab-mode-tab:focus-visible {
+        outline: 2px solid var(--c-primary);
+        outline-offset: 2px;
+      }
+      .vocab-know-btn:active {
+        transform: scale(0.97);
+      }
+      .vocab-know-btn:focus-visible {
+        outline: 2px solid var(--c-primary);
+        outline-offset: 2px;
+      }
+      .vocab-know-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .vocab-rate-btn:active {
+        transform: scale(0.97);
+      }
+      .vocab-rate-btn:focus-visible {
+        outline: 2px solid var(--c-primary);
+        outline-offset: 2px;
+      }
+      .vocab-rate-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
       /* Progress bar */
-      .vocab-progress-bar{height:6px;background:var(--c-border);border-radius:3px;margin-top:12px;overflow:hidden}
-      .vocab-progress-fill{height:100%;background:var(--c-primary);border-radius:3px;transition:width 0.4s ease}
+      .vocab-progress-bar {
+        height: 6px;
+        background: var(--c-border);
+        border-radius: 3px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+      .vocab-progress-fill {
+        height: 100%;
+        background: var(--c-primary);
+        border-radius: 3px;
+        transition: width 0.4s ease;
+      }
       /* Completion */
-      .vocab-complete{text-align:center;padding:32px}
-      .vocab-complete-icon{font-size:56px;margin-bottom:16px}
-      .vocab-complete h3{font-size:22px;color:var(--c-text);margin-bottom:8px}
-      .vocab-complete p{color:var(--c-text-2);margin-bottom:20px}
+      .vocab-complete {
+        text-align: center;
+        padding: 32px;
+      }
+      .vocab-complete-icon {
+        font-size: 56px;
+        margin-bottom: 16px;
+      }
+      .vocab-complete h3 {
+        font-size: 22px;
+        color: var(--c-text);
+        margin-bottom: 8px;
+      }
+      .vocab-complete p {
+        color: var(--c-text-2);
+        margin-bottom: 20px;
+      }
       /* Upload */
-      .vocab-upload-zone{border:2px dashed var(--c-border);border-radius:var(--radius-md);padding:32px;text-align:center;cursor:pointer;transition:all 0.2s ease}
-      .vocab-upload-zone:hover{border-color:var(--c-primary);background:var(--c-primary-light)}
-      .vocab-upload-icon{font-size:40px;display:block;margin-bottom:8px}
+      .vocab-upload-zone {
+        border: 2px dashed var(--c-border);
+        border-radius: var(--radius-md);
+        padding: 32px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      /* Upload spinner */
+      @keyframes vocab-spin {
+        to { transform: rotate(360deg); }
+      }
+      .vocab-spinner {
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid var(--c-border);
+        border-top-color: var(--c-primary);
+        border-radius: 50%;
+        animation: vocab-spin 0.6s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      /* Keyboard shortcut hint */
+      .vocab-shortcut-hint {
+        font-size: 12px;
+        color: var(--c-text-4);
+        text-align: center;
+        margin-top: 12px;
+      }
+      /* Dark theme overrides for vocab */
+      .dark-theme .vocab-card-face {
+        background: var(--c-surface);
+      }
+      .dark-theme .vocab-example-box {
+        background: var(--c-bg);
+      }
     </style>
   </head>
   <body>
     <header class="blog-header">
       <div class="logo">📖 不背单词</div>
       <div class="header-actions">
-        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
-        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
-        <a href="/library" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">📚 资源库</a>
-        <a href="/herb" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">🌿 中药识别</a>
+        <a
+          href="/"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >← 博客</a
+        >
+        <a
+          href="/personal"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >👤 个人主页</a
+        >
+        <a
+          href="/library"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >📚 资源库</a
+        >
+        <a
+          href="/herb"
+          class="toggle-btn toggle-btn-outline"
+          style="text-decoration: none"
+          >🌿 中药识别</a
+        >
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
-          <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">退出登录</button>
+          <button
+            id="logout-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
+            退出登录
+          </button>
         </div>
         <div id="auth-guest-area" class="auth-guest-area">
-          <button id="login-open-btn" class="toggle-btn toggle-btn-outline" type="button">登录</button>
-          <button id="register-open-btn" class="toggle-btn" type="button">注册</button>
+          <button
+            id="login-open-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
+            登录
+          </button>
+          <button id="register-open-btn" class="toggle-btn" type="button">
+            注册
+          </button>
         </div>
-        <button id="theme-btn" class="toggle-btn" type="button">切换主题</button>
+        <button id="theme-btn" class="toggle-btn" type="button">
+          切换主题
+        </button>
       </div>
     </header>
 
     <main class="blog-layout">
-
       <!-- Intro + Sets Grid -->
       <section class="intro-section">
         <h1>📖 不背单词</h1>
         <p>上传你的单词表，AI 自动补全释义与例句，智能卡片助你高效记忆</p>
+        <p>
+          期末补天专用，抛去记忆曲线，短时间多轮次高强度复现单词，直至瞬时记忆产生
+        </p>
       </section>
 
       <!-- Upload area (owner only) -->
       <section id="vocab-upload-section" class="publish-form-container hidden">
         <h3 class="publish-form-title">📤 上传单词文件</h3>
-        <p style="color:var(--c-text-2);font-size:14px;margin-bottom:12px">
-         支持任意格式文本文件（TXT / CSV / JSON / MD 等）。系统会自动调用 AI 解析并补全缺失的释义与例句。
+        <p style="color: var(--c-text-2); font-size: 14px; margin-bottom: 12px">
+          支持任意格式文件（TXT / CSV / JSON / MD / PDF等）。系统会自动调用 AI
+          解析并补全缺失的释义与例句。
         </p>
         <div class="form-field">
-          <label for="vocab-file-input" style="font-weight:500;margin-bottom:6px;display:block">选择文件</label>
+          <label
+            for="vocab-file-input"
+            style="font-weight: 500; margin-bottom: 6px; display: block"
+            >选择文件</label
+          >
           <input type="file" id="vocab-file-input" class="form-input" />
         </div>
         <div class="form-field">
-          <label for="vocab-set-name" style="font-weight:500;margin-bottom:6px;display:block">单词集名称 <span style="color:var(--c-text-3);font-weight:400">（可选，默认使用文件名）</span></label>
-          <input type="text" id="vocab-set-name" class="form-input" placeholder="例如：大学英语四 Unit1" />
+          <label
+            for="vocab-set-name"
+            style="font-weight: 500; margin-bottom: 6px; display: block"
+            >单词集名称
+            <span style="color: var(--c-text-3); font-weight: 400"
+              >（可选，默认使用文件名）</span
+            ></label
+          >
+          <input
+            type="text"
+            id="vocab-set-name"
+            class="form-input"
+            placeholder="例如：大学英语四 Unit1"
+          />
         </div>
-        <button id="vocab-upload-btn" class="toggle-btn form-submit-btn" type="button">
+        <button
+          id="vocab-upload-btn"
+          class="toggle-btn form-submit-btn"
+          type="button"
+        >
           🤖 AI 解析并上传
         </button>
-        <div id="vocab-upload-status" class="hidden" style="text-align:center;padding:16px;color:var(--c-text-2)"></div>
+        <div
+          id="vocab-upload-status"
+          class="hidden"
+          style="text-align: center; padding: 16px; color: var(--c-text-2)"
+        ></div>
       </section>
 
       <!-- Sets Grid -->
       <section id="vocab-sets-section">
-        <h3 style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--c-text)">📚 单词集</h3>
+        <h3
+          style="
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--c-text);
+          "
+        >
+          📚 单词集
+        </h3>
         <div id="vocab-sets-grid" class="blog-grid"></div>
       </section>
 
       <!-- Learning Area (hidden until set selected) -->
       <section id="vocab-learn-section" class="publish-form-container hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+          "
+        >
           <div>
-            <button id="vocab-back-btn" class="toggle-btn toggle-btn-outline" type="button" style="font-size:14px">← 返回词库列表</button>
-            <span id="vocab-set-title" style="font-size:18px;font-weight:600;margin-left:12px;color:var(--c-text)"></span>
+            <button
+              id="vocab-back-btn"
+              class="toggle-btn toggle-btn-outline"
+              type="button"
+              style="font-size: 14px"
+            >
+              ← 返回词库列表
+            </button>
+            <span
+              id="vocab-set-title"
+              style="
+                font-size: 18px;
+                font-weight: 600;
+                margin-left: 12px;
+                color: var(--c-text);
+              "
+            ></span>
           </div>
-          <span id="vocab-progress-text" style="font-size:14px;color:var(--c-text-2)"></span>
+          <span
+            id="vocab-progress-text"
+            style="font-size: 14px; color: var(--c-text-2)"
+          ></span>
         </div>
 
-        <div class="vocab-progress-bar"><div id="vocab-progress-fill" class="vocab-progress-fill" style="width:0%"></div></div>
+        <div class="vocab-progress-bar">
+          <div
+            id="vocab-progress-fill"
+            class="vocab-progress-fill"
+            style="width: 0%"
+          ></div>
+        </div>
 
         <!-- Mode tabs -->
-        <div class="vocab-mode-tabs" style="margin-top:16px">
-          <button class="vocab-mode-tab active" data-mode="learn">🔄 单词卡片</button>
-          <button class="vocab-mode-tab" data-mode="spelling">✍️ 拼写测试</button>
+        <div class="vocab-mode-tabs" style="margin-top: 16px">
+          <button class="vocab-mode-tab active" data-mode="learn">
+            🔄 单词卡片
+          </button>
+          <button class="vocab-mode-tab" data-mode="spelling">
+            ✍️ 拼写测试
+          </button>
           <button class="vocab-mode-tab" data-mode="review">🔁 复习模式</button>
         </div>
 
@@ -144,18 +574,33 @@
         <div id="vocab-card-area">
           <div class="vocab-card-scene">
             <div class="vocab-card-inner" id="vocab-card-inner">
-              <div class="vocab-card-face vocab-card-front" id="vocab-card-front"></div>
-              <div class="vocab-card-face vocab-card-back" id="vocab-card-back"></div>
+              <div
+                class="vocab-card-face vocab-card-front"
+                id="vocab-card-front"
+              ></div>
+              <div
+                class="vocab-card-face vocab-card-back"
+                id="vocab-card-back"
+              ></div>
             </div>
           </div>
-          <div class="vocab-know-buttons" style="margin:20px auto 0" id="vocab-know-btns">
-            <button class="vocab-know-btn unknown" id="btn-unknown">😕 不认识</button>
+          <div
+            class="vocab-know-buttons"
+            style="margin: 20px auto 0"
+            id="vocab-know-btns"
+          >
+            <button class="vocab-know-btn unknown" id="btn-unknown">
+              😕 不认识
+            </button>
             <button class="vocab-know-btn know" id="btn-know">😊 认识</button>
           </div>
           <div class="vocab-rating-row" id="vocab-rating-row">
-            <button class="vocab-rate-btn again" id="btn-again">🔄 再看看</button>
+            <button class="vocab-rate-btn again" id="btn-again">
+              🔄 再看看
+            </button>
             <button class="vocab-rate-btn pass" id="btn-pass">✅ 过</button>
           </div>
+          <div class="vocab-shortcut-hint">💡 键盘快捷键：← → 翻卡 · 1-4 评分 · Enter 确认拼写 · Esc 返回</div>
         </div>
 
         <!-- Spelling Area -->
@@ -163,14 +608,41 @@
           <div class="vocab-spelling-area">
             <div class="vocab-spelling-def">
               <div class="vocab-def-zh" id="spell-def-zh"></div>
-              <div class="vocab-def-en" id="spell-def-en" style="margin-top:8px"></div>
+              <div
+                class="vocab-def-en"
+                id="spell-def-en"
+                style="margin-top: 8px"
+              ></div>
             </div>
             <div id="spell-pos-tag" class="vocab-pos-tag"></div>
-            <input type="text" class="vocab-spell-input" id="spell-input" placeholder="输入英文单词..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <input
+              type="text"
+              class="vocab-spell-input"
+              id="spell-input"
+              placeholder="输入英文单词..."
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
             <div class="vocab-spell-result" id="spell-result"></div>
-            <div style="display:flex;gap:12px;width:100%;max-width:380px">
-              <button class="vocab-rate-btn again" id="btn-spell-skip" style="flex:1">跳过</button>
-              <button class="toggle-btn form-submit-btn" id="btn-spell-submit" style="flex:1;max-width:none">确认</button>
+            <div
+              style="display: flex; gap: 12px; width: 100%; max-width: 380px"
+            >
+              <button
+                class="vocab-rate-btn again"
+                id="btn-spell-skip"
+                style="flex: 1"
+              >
+                跳过
+              </button>
+              <button
+                class="toggle-btn form-submit-btn"
+                id="btn-spell-submit"
+                style="flex: 1; max-width: none"
+              >
+                确认
+              </button>
             </div>
           </div>
         </div>
@@ -181,8 +653,19 @@
             <div class="vocab-complete-icon">🎉</div>
             <h3 id="vocab-complete-title">本轮学习完成！</h3>
             <p id="vocab-complete-stats"></p>
-            <button class="toggle-btn" id="btn-vocab-restart" style="margin-right:8px">再来一轮</button>
-            <button class="toggle-btn toggle-btn-outline" id="btn-vocab-spell-start">开始拼写测试</button>
+            <button
+              class="toggle-btn"
+              id="btn-vocab-restart"
+              style="margin-right: 8px"
+            >
+              再来一轮
+            </button>
+            <button
+              class="toggle-btn toggle-btn-outline"
+              id="btn-vocab-spell-start"
+            >
+              开始拼写测试
+            </button>
           </div>
         </div>
       </section>
@@ -190,11 +673,11 @@
 
     <footer class="blog-footer">
       <p>
-        <a href="/" style="color:inherit;">博客</a> ·
-        <a href="/personal" style="color:inherit;">个人主页</a> ·
-        <a href="/library" style="color:inherit;">资源库</a> ·
-        <a href="/herb" style="color:inherit;">中药识别</a> ·
-        <a href="/vocab" style="color:inherit;">不背单词</a>
+        <a href="/" style="color: inherit">博客</a> ·
+        <a href="/personal" style="color: inherit">个人主页</a> ·
+        <a href="/library" style="color: inherit">资源库</a> ·
+        <a href="/herb" style="color: inherit">中药识别</a> ·
+        <a href="/vocab" style="color: inherit">不背单词</a>
       </p>
       <p>© 2026 Ltto的乌托邦 · 单词数据由 DeepSeek AI 驱动</p>
     </footer>
@@ -204,17 +687,46 @@
       <div class="auth-modal-content">
         <span id="auth-modal-close" class="custom-modal-close">×</span>
         <div class="auth-tabs">
-          <button id="auth-tab-login" class="auth-tab active" type="button" data-tab="login">登录</button>
-          <button id="auth-tab-register" class="auth-tab" type="button" data-tab="register">注册</button>
+          <button
+            id="auth-tab-login"
+            class="auth-tab active"
+            type="button"
+            data-tab="login"
+          >
+            登录
+          </button>
+          <button
+            id="auth-tab-register"
+            class="auth-tab"
+            type="button"
+            data-tab="register"
+          >
+            注册
+          </button>
         </div>
         <form id="login-form" class="auth-form">
           <div class="form-field">
             <label for="login-username">用户名</label>
-            <input type="text" id="login-username" placeholder="请输入用户名" required minlength="3" maxlength="20" class="form-input" />
+            <input
+              type="text"
+              id="login-username"
+              placeholder="请输入用户名"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
           </div>
           <div class="form-field">
             <label for="login-password">密码</label>
-            <input type="password" id="login-password" placeholder="请输入密码" required minlength="6" class="form-input" />
+            <input
+              type="password"
+              id="login-password"
+              placeholder="请输入密码"
+              required
+              minlength="6"
+              class="form-input"
+            />
           </div>
           <p id="login-error" class="auth-error hidden"></p>
           <button type="submit" class="toggle-btn form-submit-btn">登录</button>
@@ -222,11 +734,26 @@
         <form id="register-form" class="auth-form hidden">
           <div class="form-field">
             <label for="register-username">用户名</label>
-            <input type="text" id="register-username" placeholder="3-20 个字符" required minlength="3" maxlength="20" class="form-input" />
+            <input
+              type="text"
+              id="register-username"
+              placeholder="3-20 个字符"
+              required
+              minlength="3"
+              maxlength="20"
+              class="form-input"
+            />
           </div>
           <div class="form-field">
             <label for="register-password">密码</label>
-            <input type="password" id="register-password" placeholder="至少 6 位" required minlength="6" class="form-input" />
+            <input
+              type="password"
+              id="register-password"
+              placeholder="至少 6 位"
+              required
+              minlength="6"
+              class="form-input"
+            />
           </div>
           <p id="register-error" class="auth-error hidden"></p>
           <button type="submit" class="toggle-btn form-submit-btn">注册</button>

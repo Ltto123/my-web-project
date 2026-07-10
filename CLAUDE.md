@@ -247,3 +247,72 @@ bash deploy.sh -b
 ```
 
 **服务器**: `root@106.14.218.12`，SSH key: `~/.ssh/id_ed25519`
+
+### 部署节奏
+
+1. **先在本地完成所有开发和测试**，确认功能正常
+2. **做完一项改动后，主动问用户是否需要远程部署**，不要自动部署
+3. 用户确认后再执行 `bash deploy.sh` 命令
+4. 例外：用户明确说"部署"或"deploy"时可以直接执行
+
+### 校对规则
+
+- 当用户说「校对」或「检查」时，**先返回内容给用户审阅**，等用户确认后再写入文件
+- **不要未经确认直接写入** CLAUDE.md 或其他项目文档
+
+---
+
+## 开发注意事项（2026-07 复盘）
+
+### 1. 数据权限：新功能第一步就加过滤
+
+vocab 列表未按 `user_id` 过滤，任何登录用户可见所有数据。
+- 列表接口：`WHERE user_id = current_user.id`
+- 详情/状态接口：校验所有权，非本人返回 403
+- 不要等"后补"，权限是功能的一部分
+
+### 2. SQLite：显式开启 foreign_keys 和 WAL
+
+- `PRAGMA foreign_keys=ON` — 默认 OFF，CASCADE DELETE 静默失效
+- `PRAGMA journal_mode=WAL` — 默认 DELETE 模式，写锁阻塞并发读
+- 已在 `models.py` 的 connect 事件中统一设置；用 `sqlite3.connect()` 的脚本需手动执行
+- 测试后验证：`SELECT COUNT(*) FROM child WHERE parent_id NOT IN (SELECT id FROM parent)` 应为 0
+
+### 3. API 调用：不依赖默认值
+
+删除 `max_tokens=32000` 后 DeepSeek 默认 4096，130+ 词 JSON 被静默截断，无报错。
+- `max_tokens`、`timeout`、`temperature` 显式传值
+- 检查 `finish_reason`；`"length"` 表示输出被截断
+- 变更参数后对比输出条目数；用正则先数输入中有多少条
+
+### 4. 前端鉴权：全局事件 + 跨标签页同步
+
+登录后 `updateAuthUI()` 只更新导航栏，页面内按钮不刷新。
+- `updateAuthUI()` 末尾 `dispatchEvent(new CustomEvent("auth-changed"))`
+- 各页面 `addEventListener("auth-changed", ...)` 重刷鉴权 UI
+- `window.addEventListener("storage", ...)` 监听 `USER_STORAGE_KEY` 实现跨标签页同步
+
+### 5. CSS：交互元素四态必查
+
+全站缺 `:active`、`:focus-visible`、`:disabled`。
+- 每个可交互元素：hover / active(`scale(0.97)`) / focus-visible(outline `--c-primary`) / disabled
+- 颜色用 CSS 变量，禁止硬编码 `#xxxxxx`
+- 写完 Tab 键遍历 + 鼠标点击验证
+
+### 6. 并行处理：共享可变对象加锁
+
+`ThreadPoolExecutor` + `as_completed` 中 `seen` set 需 `threading.Lock`。
+- 验证：总词数 = 唯一词数（差值 >0 即去重失败）
+- 先串行跑通得到正确结果，再开并行对照
+
+### 7. 测试用真实数据
+
+5 个捏造单词无法暴露 300+ 词截断。大英四 PDF（755 词）实测覆盖率仅 58%。
+- 用用户提供的真实文件；正则计数 → 对比 AI 输出覆盖率
+- 去重率 = `(总数 - 唯一数) / 总数`，>0% 即 bug
+
+### 8. 测试清理：验证级联删除
+
+foreign_keys 未开启导致 orphan words 残留，SQLite ID 复用后数据"复活"。
+- 测试最后一步：删 set → 查 words 是否级联删除 → 删 user
+- SQLite 无 AUTOINCREMENT 时 ROWID 会被复用，不依赖"ID 不会冲突"假设

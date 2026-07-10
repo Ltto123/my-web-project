@@ -62,7 +62,7 @@ function renderPersonalList() {
     let imagesHtml = "";
     if (post.image_urls?.length) {
       imagesHtml = '<div class="image-grid">' +
-        post.image_urls.map(u => `<img src="${escapeHtml(u)}" class="post-thumb" alt="图片" data-full="${escapeHtml(u)}" />`).join("") +
+        post.image_urls.map(u => `<img src="${escapeHtml(u)}" class="post-thumb" alt="图片" data-full="${escapeHtml(u)}" loading="lazy" decoding="async" />`).join("") +
         '</div>';
     }
     let filesHtml = "";
@@ -205,6 +205,10 @@ async function init() {
   updateAuthUI();
   document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
   await loadPersonalPosts();
+  document.addEventListener("auth-changed", () => {
+    document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
+    loadPersonalPosts();
+  });
 }
 
 init();

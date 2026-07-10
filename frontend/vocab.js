@@ -17,6 +17,7 @@ let spellWords = [];
 let spellIdx = 0;
 let spellStats = { correct: 0, wrong: 0 };
 let currentMode = 'learn'; // 'learn' | 'spelling' | 'review'
+let activePollInterval = null;  // track async upload polling for cleanup
 
 /* ===================================================================
    Init
@@ -31,6 +32,8 @@ async function init() {
   bindVocabEvents();
   toggleOwnerUI();
   await loadSets();
+  // Re-render on login/logout without page refresh
+  document.addEventListener("auth-changed", () => { toggleOwnerUI(); loadSets(); });
 }
 
 function toggleOwnerUI() {
@@ -156,7 +159,7 @@ function renderSets() {
 
 async function enterSet(setId) {
   try {
-    const r = await fetch(`${API_BASE}/api/v1/vocab/sets/${setId}`);
+    const r = await fetch(`${API_BASE}/api/v1/vocab/sets/${setId}`, { headers: getAuthHeaders() });
     const result = await r.json();
     if (result.code !== 0) { showToast(result.msg); return; }
     selectedSet = result.data;
@@ -176,6 +179,8 @@ async function enterSet(setId) {
 }
 
 function showSets() {
+  // Stop any active upload polling
+  if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
   document.querySelector('#vocab-learn-section').classList.add('hidden');
   document.querySelector('#vocab-sets-section').classList.remove('hidden');
   toggleOwnerUI();
@@ -223,11 +228,14 @@ async function handleUpload() {
   const fileInput = document.querySelector('#vocab-file-input');
   const nameInput = document.querySelector('#vocab-set-name');
   const statusEl = document.querySelector('#vocab-upload-status');
+  const btn = document.querySelector('#vocab-upload-btn');
   const file = fileInput.files[0];
   if (!file) { showToast('请选择文件'); return; }
 
+  // Disable button to prevent double-upload
+  btn.disabled = true;
   statusEl.classList.remove('hidden');
-  statusEl.textContent = '🤖 AI 正在解析单词文件，请稍候...（可能需要 10-30 秒）';
+  statusEl.innerHTML = '<span class="vocab-spinner"></span> 📤 正在上传文件...';
 
   const formData = new FormData();
   formData.append('file', file);
@@ -240,18 +248,73 @@ async function handleUpload() {
       body: formData,
     });
     const result = await r.json();
-    if (result.code === 0) {
-      statusEl.textContent = `✅ 上传成功！解析出 ${result.data.word_count} 个单词`;
-      showToast(`单词集创建成功，共 ${result.data.word_count} 词`, 'success');
-      fileInput.value = '';
-      nameInput.value = '';
-      loadSets();
-    } else {
+    if (result.code !== 0) {
       statusEl.textContent = '';
+      btn.disabled = false;
       showToast(result.msg || '上传失败');
+      return;
     }
+
+    // Upload succeeded, now poll for AI parsing completion
+    const setId = result.data.set_id;
+    const setName = escapeHtml(result.data.name || file.name);
+    statusEl.innerHTML = `<span class="vocab-spinner"></span> 🤖 AI 正在后台解析「${setName}」...`;
+    fileInput.value = '';
+    nameInput.value = '';
+
+    // Poll every 2 seconds
+    let elapsed = 0;
+    const maxWait = 300; // 5 minutes max
+    if (activePollInterval) clearInterval(activePollInterval);
+    activePollInterval = setInterval(async () => {
+      elapsed += 2;
+      // Guard: stop polling if user logged out (e.g. cross-tab)
+      if (!isLoggedIn()) {
+        clearInterval(activePollInterval);
+        activePollInterval = null;
+        btn.disabled = false;
+        statusEl.textContent = '';
+        return;
+      }
+      try {
+        const sr = await fetch(`${API_BASE}/api/v1/vocab/sets/${setId}/status`, {
+          headers: getAuthHeaders(),
+        });
+        const sresult = await sr.json();
+        if (sresult.code !== 0) return;
+
+        const s = sresult.data;
+        if (s.status === 'completed') {
+          clearInterval(activePollInterval);
+          activePollInterval = null;
+          statusEl.textContent = `✅ 解析完成！共 ${s.word_count} 个单词`;
+          showToast(`「${setName}」解析完成，共 ${s.word_count} 词`, 'success');
+          btn.disabled = false;
+          loadSets();
+        } else if (s.status === 'error') {
+          clearInterval(activePollInterval);
+          activePollInterval = null;
+          statusEl.textContent = '';
+          btn.disabled = false;
+          showToast('AI 解析失败: ' + escapeHtml(s.error_message || '未知错误'));
+        } else if (elapsed >= maxWait) {
+          clearInterval(activePollInterval);
+          activePollInterval = null;
+          statusEl.textContent = '⚠️ 解析超时，请刷新页面查看状态';
+          btn.disabled = false;
+          loadSets();
+        } else {
+          // Still processing — update status with elapsed time
+          statusEl.innerHTML = `<span class="vocab-spinner"></span> 🤖 AI 正在后台解析「${setName}」... (已等待 ${elapsed} 秒)`;
+        }
+      } catch (e) {
+        // Polling error — keep trying (network blip, etc.)
+      }
+    }, 2000);
+
   } catch (e) {
     statusEl.textContent = '';
+    btn.disabled = false;
     showToast('上传失败: ' + e.message);
   }
 }
@@ -498,7 +561,7 @@ function showSpellQuestion() {
 
 function handleSpellSubmit() {
   const word = spellWords[spellIdx];
-  const input = document.querySelector('#vocab-spell-input');
+  const input = document.querySelector('#spell-input');
   const answer = input.value.trim();
   if (!answer) return;
 

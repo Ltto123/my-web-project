@@ -103,6 +103,22 @@ _ensure_posts_created_at_column()
 _ensure_personal_posts_media_columns()
 
 
+def _ensure_vocab_set_status_columns():
+    inspector = inspect(engine)
+    if "vocab_sets" not in inspector.get_table_names():
+        return
+    column_names = [col["name"] for col in inspector.get_columns("vocab_sets")]
+    if "status" not in column_names:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE vocab_sets ADD COLUMN status VARCHAR(20) DEFAULT 'completed'"))
+    if "error_message" not in column_names:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE vocab_sets ADD COLUMN error_message TEXT"))
+
+
+_ensure_vocab_set_status_columns()
+
+
 
 
 

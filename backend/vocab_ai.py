@@ -1,15 +1,25 @@
 """
 DeepSeek API 集成 — 单词解析与补全
 使用 OpenAI 兼容接口调用 DeepSeek，自动解析各种格式的单词文件并补全缺失字段
+大文件自动分块 + 并行处理，大幅提升解析速度
 """
 import json
 import os
 import re
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+
+# 并行处理的最大并发数（避免触发 API 限流）
+MAX_CONCURRENT_CHUNKS = 5
+# 每个 chunk 的字符数上限（控制每块单词量，避免 DeepSeek 输出超 token 限制）
+CHUNK_SIZE = 10000
+# DeepSeek API 最大输出 tokens（deepseek-chat 默认仅 4096，远不足以输出 100+ 个单词的完整 JSON）
+MAX_TOKENS = 16000
 
 SYSTEM_PROMPT = """你是一个英语词典编纂助手。用户会上传一个单词列表文件（可能是 TXT/CSV/JSON/PDF 提取的文本等各种格式），
 你需要分析并提取每个单词/短语的信息。
@@ -36,7 +46,7 @@ SYSTEM_PROMPT = """你是一个英语词典编纂助手。用户会上传一个�
 
 
 def _get_client() -> OpenAI:
-    """获取 DeepSeek OpenAI 兼容客户端"""
+    """获取 DeepSeek OpenAI 兼容客户端（每个线程独立创建）"""
     if not DEEPSEEK_API_KEY:
         raise ValueError("DEEPSEEK_API_KEY 未配置，请在 .env 文件中设置")
     return OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
@@ -90,42 +100,127 @@ def _extract_json_from_response(text: str) -> list:
     raise ValueError(f"无法从 DeepSeek 响应中解析 JSON 数组。原始响应前500字符: {text[:500]}")
 
 
-def parse_and_complete(file_content: str) -> list[dict]:
+def _split_into_chunks(file_content: str, chunk_size: int = CHUNK_SIZE) -> list[str]:
+    """将大文件按段落边界拆分为多个 chunk"""
+    if len(file_content) <= chunk_size:
+        return [file_content]
+
+    paragraphs = file_content.split("\n\n")
+    chunks = []
+    current = ""
+    for para in paragraphs:
+        if len(current) + len(para) < chunk_size:
+            current += ("\n\n" if current else "") + para
+        else:
+            if current:
+                chunks.append(current)
+            current = para
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def _process_chunk(idx: int, chunk: str, total: int) -> tuple[int, list]:
+    """在独立线程中处理单个 chunk：调用 DeepSeek API 解析单词"""
+    client = _get_client()
+    prefix = f"(第 {idx+1}/{total} 部分) " if total > 1 else ""
+    try:
+        response = client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"请解析以下单词文件内容{prefix}，提取并补全所有单词：\n\n{chunk}"}
+            ],
+            temperature=0.3,
+            max_tokens=MAX_TOKENS,
+            timeout=300,
+        )
+        raw = response.choices[0].message.content or ""
+        finish = response.choices[0].finish_reason
+
+        # 检测输出是否被截断（token 不够）
+        if finish == "length" or (raw.strip() and not raw.strip().endswith("]")):
+            print(f"  [WARN] Chunk {idx+1}/{total}: 输出可能被截断 (finish={finish}, ends_with_]= {raw.strip().endswith(']')})")
+
+        words = _extract_json_from_response(raw)
+        return idx, words
+    except Exception as e:
+        raise RuntimeError(f"第 {idx+1}/{total} 部分解析失败: {e}") from e
+
+
+def parse_and_complete(file_content: str, progress_callback=None) -> list[dict]:
     """
     将原始文件内容发送给 DeepSeek，由 AI 解析格式并补全缺失字段。
+    大文件自动分块 + 并行处理，大幅提升速度。
 
     Args:
         file_content: 原始文件文本内容
+        progress_callback: 可选回调(chunk_done: int, chunk_total: int)，每完成一个chunk后调用
 
     Returns:
-        解析并补全后的单词列表，每个元素包含 word, pos, def_en, def_zh, example_en, example_zh, is_phrase
+        解析并补全后的单词列表
     """
-    client = _get_client()
+    chunks = _split_into_chunks(file_content)
 
-    # Truncate very large files
-    max_chars = 80000
-    if len(file_content) > max_chars:
-        file_content = file_content[:max_chars] + "\n...[内容已截断]"
+    # Collect results from parallel chunk processing
+    chunk_results = []  # list of (chunk_idx, word_dicts)
+    seen = set()
+    seen_lock = threading.Lock()
 
-    response = client.chat.completions.create(
-        model=DEEPSEEK_MODEL,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"请解析以下单词文件内容，提取并补全所有单词：\n\n{file_content}"}
-        ],
-        temperature=0.3,
-        max_tokens=32000,
-        timeout=120,
-    )
+    max_workers = min(MAX_CONCURRENT_CHUNKS, len(chunks))
 
-    raw = response.choices[0].message.content or ""
-    words = _extract_json_from_response(raw)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_process_chunk, i, chunk, len(chunks)): i
+            for i, chunk in enumerate(chunks)
+        }
 
-    # Validate and normalize each word entry
+        done_count = 0
+        chunk_errors = []
+        for future in as_completed(futures):
+            chunk_idx = futures[future]
+            try:
+                idx, words = future.result()
+            except Exception as e:
+                chunk_errors.append((chunk_idx, str(e)))
+                done_count += 1
+                if progress_callback:
+                    progress_callback(done_count, len(chunks))
+                continue
+            done_count += 1
+
+            # 线程安全去重
+            deduped = []
+            with seen_lock:
+                for w in words:
+                    if not isinstance(w, dict) or not w.get("word"):
+                        continue
+                    key = str(w.get("word", "")).strip().lower()
+                    if not key or key in seen:
+                        continue
+                    seen.add(key)
+                    deduped.append(w)
+            chunk_results.append((idx, deduped))
+
+            if progress_callback:
+                progress_callback(done_count, len(chunks))
+
+    # Report chunk failures (if any)
+    if chunk_errors:
+        failed_detail = "; ".join(f"chunk {i+1}: {e}" for i, e in chunk_errors)
+        raise RuntimeError(f"{len(chunk_errors)}/{len(chunks)} 个分块解析失败: {failed_detail}")
+
+    # Sort by chunk index to maintain original document order
+    chunk_results.sort(key=lambda x: x[0])
+
+    # Flatten: all words in original chunk order
+    all_words = []
+    for _, words in chunk_results:
+        all_words.extend(words)
+
+    # Validate and normalize
     result = []
-    for i, w in enumerate(words):
-        if not isinstance(w, dict) or not w.get("word"):
-            continue
+    for i, w in enumerate(all_words):
         result.append({
             "word": str(w.get("word", "")).strip(),
             "pos": str(w.get("pos", "")).strip() or None,

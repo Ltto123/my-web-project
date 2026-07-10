@@ -190,6 +190,9 @@ async function openDetailModal(postId) {
 
   modal.querySelector(".custom-modal-close").addEventListener("click", () => modal.remove());
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+  document.addEventListener("keydown", function escHandler(e) {
+    if (e.key === "Escape") { modal.remove(); document.removeEventListener("keydown", escHandler); }
+  });
 
   const likeBtn = modal.querySelector("#modal-like-btn");
   likeBtn.addEventListener("click", async () => {
@@ -296,6 +299,11 @@ async function init() {
   document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
   document.querySelector("#login-prompt-section")?.classList.toggle("hidden", isOwner());
   await loadPostsFromServer();
+  document.addEventListener("auth-changed", () => {
+    document.querySelector("#publish-section")?.classList.toggle("hidden", !isOwner());
+    document.querySelector("#login-prompt-section")?.classList.toggle("hidden", isOwner());
+    loadPostsFromServer();
+  });
 }
 
 init();

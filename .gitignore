@@ -7,6 +7,8 @@
 # --- OS junk ---
 # --- Python / venv ---
 *.db
+*.db-shm
+*.db-wal
 *.ps1
 *.pyc
 *.pyo

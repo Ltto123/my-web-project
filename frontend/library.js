@@ -206,6 +206,10 @@ async function init() {
   updateAuthUI();
   document.querySelector("#upload-section")?.classList.toggle("hidden", !isOwner());
   await loadResources(currentCategory);
+  document.addEventListener("auth-changed", () => {
+    document.querySelector("#upload-section")?.classList.toggle("hidden", !isOwner());
+    loadResources(currentCategory);
+  });
 }
 
 init();
