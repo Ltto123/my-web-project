@@ -2438,3 +2438,262 @@ body::before { z-index: var(--z-base); }
       .dark-theme .vocab-example-box {
         background: var(--c-bg);
       }
+
+/* ==========================================================================
+   HIGH-END VISUAL DESIGN — Taste-Skill Applied
+   Vibe: Editorial Luxury / Warm Paper
+   Layout: Z-Axis Cascade + Asymmetrical Bento
+   ========================================================================== */
+
+/* ── Macro-Whitespace: Breathing Room ── */
+.blog-layout {
+  margin: 64px auto 80px;
+  padding: 0 24px;
+}
+@media (max-width: 640px) {
+  .blog-layout {
+    margin: 32px auto 48px;
+    padding: 0 16px;
+  }
+}
+
+/* ── Noise/Grain Overlay (fixed, pointer-events-none) ── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-sticky) + 1);
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after { display: none; }
+}
+
+/* ── Custom Cubic-Bezier (Apple-like spring feel) ── */
+:root {
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Double-Bezel Card Architecture ── */
+.blog-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 2px rgba(45, 42, 38, 0.04),
+    0 4px 16px rgba(45, 42, 38, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    box-shadow 0.5s var(--ease-out-expo),
+    border-color 0.5s var(--ease-out-expo);
+  position: relative;
+  overflow: hidden;
+}
+.blog-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 40%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out-expo);
+}
+.blog-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 2px 4px rgba(45, 42, 38, 0.06),
+    0 8px 32px rgba(45, 42, 38, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: var(--c-gold-dim);
+}
+.blog-card:hover::after {
+  opacity: 1;
+}
+
+/* Dark theme card refinement */
+body.dark-theme .blog-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+body.dark-theme .blog-card:hover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Staggered Entry Animation ── */
+.blog-card {
+  animation: cardReveal 0.7s var(--ease-out-expo) both;
+}
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+/* Stagger delays: JS sets --card-index inline */
+.blog-card:nth-child(1) { animation-delay: 0.05s; }
+.blog-card:nth-child(2) { animation-delay: 0.1s; }
+.blog-card:nth-child(3) { animation-delay: 0.15s; }
+.blog-card:nth-child(4) { animation-delay: 0.2s; }
+.blog-card:nth-child(5) { animation-delay: 0.25s; }
+.blog-card:nth-child(6) { animation-delay: 0.3s; }
+.blog-card:nth-child(7) { animation-delay: 0.35s; }
+.blog-card:nth-child(8) { animation-delay: 0.4s; }
+
+/* ── Eyebrow Tags ── */
+.eyebrow-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-w-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--c-primary-light);
+  color: var(--c-primary);
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Intro Section: Editorial Upgrade ── */
+.intro-section {
+  margin-bottom: 56px;
+  text-align: center;
+  padding: 56px 20px 48px;
+  background:
+    linear-gradient(160deg, var(--c-primary-light) 0%, var(--c-bg) 70%);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.intro-section h1 {
+  font-size: 36px;
+  font-weight: var(--font-w-bold);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.intro-section p {
+  font-size: var(--text-lg);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ── Section Headings: More Presence ── */
+.publish-form-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-w-semibold);
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+  color: var(--c-text);
+}
+
+/* ── Footer: Refined Spacing ── */
+.blog-footer {
+  padding: 64px 20px;
+  margin-top: 80px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Responsive: Larger screens get more whitespace ── */
+@media (min-width: 1024px) {
+  .intro-section {
+    padding: 72px 40px 64px;
+    margin-bottom: 64px;
+  }
+  .intro-section h1 {
+    font-size: 42px;
+  }
+  .blog-layout {
+    max-width: 1280px;
+    padding: 0 32px;
+  }
+}
+
+/* ==========================================================================
+   HIGH-END VISUAL DESIGN
+   Vibe: Editorial Luxury  |  Layout: Z-Axis Cascade
+   ========================================================================== */
+
+/* Double-Bezel Card Upgrade */
+.blog-card {
+  border: 1px solid var(--c-border);
+  box-shadow: 0 1px 2px rgba(45,42,38,0.04), 0 4px 16px rgba(45,42,38,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+  transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo);
+  overflow: hidden;
+}
+.blog-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 2px 4px rgba(45,42,38,0.06), 0 8px 32px rgba(45,42,38,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+  border-color: var(--c-gold-dim);
+}
+.blog-card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 40%);
+  opacity: 0; transition: opacity 0.5s var(--ease-out-expo);
+}
+.blog-card:hover::after { opacity: 1; }
+body.dark-theme .blog-card {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+body.dark-theme .blog-card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+/* Staggered Reveal */
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(24px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.blog-card { animation: cardReveal 0.7s var(--ease-out-expo) both; }
+.blog-card:nth-child(1) { animation-delay: 0.05s; }
+.blog-card:nth-child(2) { animation-delay: 0.1s; }
+.blog-card:nth-child(3) { animation-delay: 0.15s; }
+.blog-card:nth-child(4) { animation-delay: 0.2s; }
+.blog-card:nth-child(5) { animation-delay: 0.25s; }
+.blog-card:nth-child(6) { animation-delay: 0.3s; }
+.blog-card:nth-child(7) { animation-delay: 0.35s; }
+.blog-card:nth-child(8) { animation-delay: 0.4s; }
+/* Eyebrow Tag */
+.eyebrow-tag {
+  display: inline-block; padding: 3px 12px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: var(--font-w-medium); letter-spacing: 0.12em;
+  text-transform: uppercase; background: var(--c-primary-light); color: var(--c-primary);
+  margin-bottom: var(--space-sm);
+}
+/* Intro Upgrade */
+.intro-section {
+  margin-bottom: 56px; padding: 56px 20px 48px;
+  border: 1px solid var(--c-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.intro-section h1 { font-size: 36px; letter-spacing: -0.02em; margin-bottom: 12px; }
+.intro-section p { font-size: var(--text-lg); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+body.dark-theme .intro-section { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+@media (min-width: 1024px) {
+  .intro-section { padding: 72px 40px 64px; margin-bottom: 64px; }
+  .intro-section h1 { font-size: 42px; }
+  .blog-layout { max-width: 1280px; padding: 0 32px; }
+}
