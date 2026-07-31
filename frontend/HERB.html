@@ -2,52 +2,98 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="description" content="Ltto的个人博客 - 中药识别、不背单词、资源库、个人动态" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>中药识别 - ltto的博客</title>
-    <link rel="stylesheet" href="style.css?v=3" />
+    <link rel="stylesheet" href="style.css?v=5" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
+    <a href="#main-content" class="skip-link">跳转到主内容</a>
+
     <header class="blog-header">
       <div class="logo">🌿 中药识别</div>
       <div class="header-actions">
-        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
-        <div id="main-nav" class="blog-nav" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
+        <a
+          href="/"
+          class="toggle-btn toggle-btn-outline nav-link-btn"
+          >← 博客</a
+        >
+        <div
+          id="main-nav"
+          class="blog-nav"
+          style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"
+        ></div>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
-          <button id="logout-btn" class="toggle-btn toggle-btn-outline" type="button">
+          <button
+            id="logout-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
             退出登录
           </button>
         </div>
         <div id="auth-guest-area" class="auth-guest-area">
-          <button id="login-open-btn" class="toggle-btn toggle-btn-outline" type="button">
+          <button
+            id="login-open-btn"
+            class="toggle-btn toggle-btn-outline"
+            type="button"
+          >
             登录
           </button>
-          <button id="register-open-btn" class="toggle-btn" type="button">注册</button>
+          <button id="register-open-btn" class="toggle-btn" type="button">
+            注册
+          </button>
         </div>
-        <button id="theme-btn" class="toggle-btn" type="button">切换主题</button>
+        <button id="theme-btn" class="toggle-btn" type="button">
+          切换主题
+        </button>
       </div>
     </header>
 
-    <main class="blog-layout">
+    <main id="main-content" class="blog-layout">
       <section class="intro-section">
         <h1>🌿 中药饮片智能识别</h1>
-        <p>基于 MobileNetV3 深度学习的 20 种常见中药材图片分类识别，准确率 94.3%</p>
+        <p>
+          基于 MobileNetV3 深度学习的 20 种常见中药材图片分类识别，准确率 94.3%
+        </p>
       </section>
 
       <!-- 上传与识别区 -->
       <section class="publish-form-container">
         <h3 class="publish-form-title">📷 上传中药图片</h3>
         <div class="form-field">
-          <label for="herb-file" style="font-weight:500; margin-bottom:6px; display:block;">选择图片文件</label>
-          <input type="file" id="herb-file" accept="image/*" class="form-input" />
+          <label
+            for="herb-file"
+            style="font-weight: 500; margin-bottom: 6px; display: block"
+            >选择图片文件</label
+          >
+          <input
+            type="file"
+            id="herb-file"
+            accept="image/*"
+            class="form-input"
+          />
         </div>
         <div class="form-field">
-          <label for="herb-model" style="font-weight:500; margin-bottom:6px; display:block;">🧠 推理模型</label>
+          <label
+            for="herb-model"
+            style="font-weight: 500; margin-bottom: 6px; display: block"
+            >🧠 推理模型</label
+          >
           <select id="herb-model" class="form-input">
-            <option value="MobileNetV3-Large">🥇 MobileNetV3-Large（推荐 · 94.3% · 17MB）</option>
-            <option value="EfficientNet-B3">🥈 EfficientNet-B3（93.7% · 42MB）</option>
+            <option value="MobileNetV3-Large">
+              🥇 MobileNetV3-Large（推荐 · 94.3% · 17MB）
+            </option>
+            <option value="EfficientNet-B3">
+              🥈 EfficientNet-B3（93.7% · 42MB）
+            </option>
             <option value="ResNet50">🥉 ResNet50（91.7% · 91MB）</option>
           </select>
         </div>
@@ -59,10 +105,18 @@
           </div>
           <img id="preview-img" src="" alt="预览" class="hidden" />
         </div>
-        <button id="predict-btn" class="toggle-btn form-submit-btn" type="button">
+        <button
+          id="predict-btn"
+          class="toggle-btn form-submit-btn"
+          type="button"
+        >
           🔍 开始识别
         </button>
-        <div id="loading-area" class="hidden" style="text-align:center; padding:20px;">
+        <div
+          id="loading-area"
+          class="hidden"
+          style="text-align: center; padding: 20px"
+        >
           <div class="herb-spinner"></div>
           <p class="herb-loading-text">AI 正在分析识别中，请稍候...</p>
         </div>
@@ -83,11 +137,11 @@
 
     <footer class="blog-footer">
       <p>
-        <a href="/" style="color:inherit;">博客</a> ·
-        <a href="/personal" style="color:inherit;">个人主页</a> ·
-        <a href="/library" style="color:inherit;">资源库</a> ·
-        <a href="/herb" style="color:inherit;">中药识别</a> ·
-        <a href="/vocab" style="color:inherit;">不背单词</a>
+        <a href="/" class="footer-link">博客</a> ·
+        <a href="/personal" class="footer-link">个人主页</a> ·
+        <a href="/library" class="footer-link">资源库</a> ·
+        <a href="/herb" class="footer-link">中药识别</a> ·
+        <a href="/vocab" class="footer-link">不背单词</a>
       </p>
       <p>© 2026 Ltto的乌托邦 · 中药识别由 PyTorch 三模型驱动</p>
     </footer>
@@ -97,10 +151,20 @@
       <div class="auth-modal-content">
         <span id="auth-modal-close" class="custom-modal-close">×</span>
         <div class="auth-tabs">
-          <button id="auth-tab-login" class="auth-tab active" type="button" data-tab="login">
+          <button
+            id="auth-tab-login"
+            class="auth-tab active"
+            type="button"
+            data-tab="login"
+          >
             登录
           </button>
-          <button id="auth-tab-register" class="auth-tab" type="button" data-tab="register">
+          <button
+            id="auth-tab-register"
+            class="auth-tab"
+            type="button"
+            data-tab="register"
+          >
             注册
           </button>
         </div>
@@ -163,7 +227,7 @@
       </div>
     </div>
 
-    <script src="common.js?v=3"></script>
+    <script src="common.js?v=4"></script>
     <script src="herb.js?v=3"></script>
   </body>
 </html>

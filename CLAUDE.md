@@ -60,7 +60,8 @@
 ├── .env                 # 环境变量（BLOG_OWNER_USERNAME）
 ├── Dockerfile           # 生产环境镜像
 ├── docker-compose.yml   # 一键部署
-├── deploy.py            # 部署脚本（Fabric）
+├── deploy.sh            # 日常增量部署（scp 传文件）
+├── deploy_to_aliyun.py  # 首次全量部署（从零搭服务器）
 ├── requirements.txt     # Python 依赖
 └── openspec/            # OpenSpec 规范文档
 ```
@@ -199,6 +200,133 @@ docker-compose up -d
 
 ---
 
+## 远程部署
+
+### 一、连接服务器（SSH）
+
+**本服务器**：`root@106.14.218.12`，阿里云轻量应用服务器，Ubuntu 24.04，2核2G。
+
+SSH 连接的三个要素：
+
+| 要素 | 本项目的值 | 说明 |
+|------|-----------|------|
+| 用户@主机 | `root@106.14.218.12` | 云服务器公网 IP（阿里云控制台可查） |
+| 密钥文件 | `~/.ssh/id_ed25519` | `ssh-keygen -t ed25519` 生成，公钥传到服务器 `~/.ssh/authorized_keys` |
+| 端口 | 22（默认） | 不改则不用写 |
+
+常用 SSH 命令模式：
+
+```bash
+# 登录服务器
+ssh root@106.14.218.12
+
+# 在服务器上执行一条命令（不登录）
+ssh root@106.14.218.12 "ls /opt/blog"
+
+# 用指定密钥
+ssh -i ~/.ssh/id_ed25519 root@106.14.218.12
+```
+
+### 二、传输文件（scp）
+
+把本地文件传到服务器上：
+
+```bash
+# 传单个文件
+scp frontend/style.css root@106.14.218.12:/opt/blog/frontend/
+
+# 传整个目录
+scp -r frontend/ root@106.14.218.12:/opt/blog/
+
+# 从服务器下载文件
+scp root@106.14.218.12:/opt/blog/blog.db ./
+```
+
+scp 走的就是 SSH 通道，SSH 通了 scp 就能用。
+
+### 三、两种部署模式（适用于所有项目）
+
+| | 增量部署（日常改代码后） | 全量部署（重装/首次搭服务器） |
+|---|---|---|
+| **做什么** | 只传改了的几个文件 | 搭环境 + 传所有代码 + 装依赖 + 配服务 |
+| **用什么** | scp / rsync / git pull | 自动化脚本（paramiko / ansible / bash） |
+| **速度** | 几秒 | 几分钟 |
+| **要不要重启服务** | 改前端不用，改后端要 | 要 |
+| **本项目脚本** | `bash deploy.sh` | `python deploy_to_aliyun.py` |
+
+**原则**：平时走增量，别每次都全量。改了什么就传什么，改前端文件甚至不需要重启。
+
+### 四、让程序一直在后台跑（systemd）
+
+程序直接 `python main.py` 的话，SSH 断开程序就停了。需要 **systemd 服务**让它常驻。
+
+服务文件位置：`/etc/systemd/system/<服务名>.service`（本项目：`blog.service`）
+
+管理命令（换成任何项目都能用）：
+
+```bash
+systemctl status <服务名>      # 查看运行状态
+systemctl restart <服务名>     # 重启（改代码后执行）
+systemctl stop <服务名>        # 停止
+systemctl start <服务名>       # 启动
+systemctl enable <服务名>      # 设置开机自启
+journalctl -u <服务名> -f      # 查看实时日志
+journalctl -u <服务名> -n 30   # 查看最近 30 行日志
+```
+
+远程执行时要包在 ssh 里：
+
+```bash
+ssh root@106.14.218.12 "systemctl restart blog.service"
+```
+
+### 五、服务器上文件放哪（惯例）
+
+| 路径 | 放什么 | 为什么 |
+|------|--------|--------|
+| `/opt/<项目名>/` | 项目代码 | 非系统软件的标准位置 |
+| `/opt/<项目名>/.venv/` | Python 虚拟环境 | 隔离依赖，不污染系统 Python |
+| `/etc/systemd/system/<服务名>.service` | systemd 服务定义文件 | 系统服务统一管理 |
+| `/var/log/` | 日志（如果用 systemd 则自动记录） | 日志惯例位置 |
+
+本项目：代码在 `/opt/blog/`，静态文件在 `/opt/blog/frontend/`，Python 后端在 `/opt/blog/backend/`，数据库 `/opt/blog/blog.db`。
+
+### 六、防火墙——最容易忘的一步
+
+云服务器默认不对外开放端口。买了服务器部署好，浏览器打不开 → 99% 是防火墙没放行。
+
+**阿里云**：控制台 → 轻量应用服务器 → 防火墙 → 添加规则（TCP + 你的端口 + 允许 0.0.0.0/0）
+**腾讯云**：控制台 → 安全组 → 添加入站规则
+
+本项目端口：**8000**。
+
+### 七、直连服务器上的 SQLite
+
+```bash
+ssh root@106.14.218.12 "cd /opt/blog && /opt/blog/.venv/bin/python -c \"
+import sqlite3; conn = sqlite3.connect('blog.db'); c = conn.cursor()
+c.execute('PRAGMA foreign_keys=ON')  # SQLite 必须手动开！
+c.execute('SELECT * FROM users')
+print(c.fetchall())
+conn.close()
+\""
+```
+
+⚠️ SQLite 默认 `foreign_keys=OFF`，直连时 CASCADE DELETE 静默失效，务必手动 `PRAGMA foreign_keys=ON`。
+
+### 八、本项目两个部署脚本速查
+
+| 场景 | 命令 |
+|------|------|
+| 改了一个 CSS/JS/HTML | `bash deploy.sh 文件名` |
+| 改了多个前端文件 | `bash deploy.sh` |
+| 改了后端 Python | `bash deploy.sh -b`（会自动重启） |
+| 前后端都改了 | `bash deploy.sh -a` |
+| 新买的服务器首次部署 | `python deploy_to_aliyun.py` |
+| 查看服务器是否正常 | `ssh root@106.14.218.12 "systemctl status blog.service"` |
+
+---
+
 ## 新功能上线前测试协议
 
 **每个新功能开发完成后，必须在云服务器上跑端到端测试，然后清理测试数据。**
@@ -291,6 +419,7 @@ vocab 列表未按 `user_id` 过滤，任何登录用户可见所有数据。
 - `updateAuthUI()` 末尾 `dispatchEvent(new CustomEvent("auth-changed"))`
 - 各页面 `addEventListener("auth-changed", ...)` 重刷鉴权 UI
 - `window.addEventListener("storage", ...)` 监听 `USER_STORAGE_KEY` 实现跨标签页同步
+- ⚠️ **listener 必须在第一个 `await` 之前注册**：`init()` 是 async 函数，`await loadSiteConfig()` 会 yield 到事件循环。如果用户在 yield 期间登录，`updateAuthUI()` 派发的 `auth-changed` 事件会因为 listener 还没注册而被静默丢弃——导航栏显示已登录，页面内容不刷新。正确顺序：`loadUserSession()` → `initAuthInteractions()` → `addEventListener("auth-changed", ...)` → 然后才 `await`
 
 ### 5. CSS：交互元素四态必查
 
@@ -316,3 +445,55 @@ vocab 列表未按 `user_id` 过滤，任何登录用户可见所有数据。
 foreign_keys 未开启导致 orphan words 残留，SQLite ID 复用后数据"复活"。
 - 测试最后一步：删 set → 查 words 是否级联删除 → 删 user
 - SQLite 无 AUTOINCREMENT 时 ROWID 会被复用，不依赖"ID 不会冲突"假设
+## 习惯性用语：
+1.说到“另外”等有多任务倾向的词汇，应自动打开workflows模式
+
+---
+
+## AI 设计技能（Skills）
+
+### Taste-Skill（已安装 ✅）
+
+**仓库**：[github.com/Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)（~66k stars，MIT）
+
+AI 前端设计反模板化框架，通过 13 个 skill 模块将设计品味注入 AI 编程助手。零运行时依赖，纯 prompt/checklist 方式工作。
+
+**已安装模块**（`C:\Users\dudu1\.agents\skills\`）：
+
+| 模块 | 用途 | 适用场景 |
+|------|------|---------|
+| `redesign-existing-projects` | 存量项目 UI 审计与修复 | **博客改进首选** |
+| `design-taste-frontend` | v2 核心引擎，三旋钮调节 | 新页面/组件创建 |
+| `design-taste-frontend-v1` | v1 原版（兼容旧项目） | 向后兼容 |
+| `high-end-visual-design` | 高端视觉约束 | 品质感提升 |
+| `minimalist-ui` | 极简编辑风 | 匹配博客暖色纸质感 |
+| `industrial-brutalist-ui` | 工业粗野风 | 实验性设计 |
+| `gpt-taste` | 激进的布局/动效约束 | 高视觉冲击需求 |
+| `full-output-enforcement` | 强制完整代码输出 | 大范围重构 |
+| `image-to-code` | 参考图→代码流水线 | 视觉模仿 |
+| `imagegen-frontend-web` | 网页视觉参考图生成 | 设计探索 |
+| `imagegen-frontend-mobile` | 移动端原型生成 | 移动端设计 |
+| `brandkit` | 品牌资产板生成 | 品牌定义 |
+| `stitch-design-taste` | Google Stitch 兼容 + DESIGN.md | 跨平台设计系统 |
+
+**使用方式**：在 Claude Code 中直接描述需求，AI 自动调用相关 skill。例如：
+- "帮我审计博客的设计，找出反模式" → 自动调用 `redesign-existing-projects`
+- "给博客首页做一次设计审查" → 自动调用 `design-taste-frontend`
+- "给这个页面增加高端感" → 自动调用 `high-end-visual-design`
+
+**三旋钮参数**（design-taste-frontend v2）：
+- `DESIGN_VARIANCE`（1-10）：布局变异度，1=居中整洁，10=不对称现代感
+- `MOTION_INTENSITY`（1-10）：动效强度，1=仅hover，10=滚动磁性复杂动效
+- `VISUAL_DENSITY`（1-10）：视觉密度，1=宽松留白，10=密集型仪表盘
+
+### Scroll-World（待安装 ⚠️）
+
+**仓库**：[github.com/oso95/scroll-world](https://github.com/oso95/scroll-world)（~602 stars，MIT）
+
+生成滚动驱动 3D "飞行穿越" 品牌落地页，Apple 风格无缝转场。
+
+**安装**：`/plugin marketplace add oso95/scroll-world`（Claude Code 插件）
+
+**前置条件**：需要 Higgsfield CLI + 付费充值（约 $10-15/页），另需 ffmpeg + Python 3 + Pillow。
+
+**适用场景**：独立品牌落地页、产品发布页，不适用于改进现有项目。待有落地页需求时再安装。

@@ -2,20 +2,43 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="description" content="Ltto的个人博客 - 中药识别、不背单词、资源库、个人动态" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>资源库 - ltto的博客</title>
-    <link rel="stylesheet" href="style.css?v=3" />
+    <link rel="stylesheet" href="style.css?v=5" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
+    <a href="#main-content" class="skip-link">跳转到主内容</a>
+
     <header class="blog-header">
       <div class="logo">📚 资源库</div>
       <div class="header-actions">
-        <a href="/" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">← 博客</a>
-        <a href="/personal" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">👤 个人主页</a>
-        <a href="/herb" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">🌿 中药识别</a>
-        <a href="/vocab" class="toggle-btn toggle-btn-outline" style="text-decoration:none;">📖 不背单词</a>
+        <a
+          href="/"
+          class="toggle-btn toggle-btn-outline nav-link-btn"
+          >← 博客</a
+        >
+        <a
+          href="/personal"
+          class="toggle-btn toggle-btn-outline nav-link-btn"
+          >👤 个人主页</a
+        >
+        <a
+          href="/herb"
+          class="toggle-btn toggle-btn-outline nav-link-btn"
+          >🌿 中药识别</a
+        >
+        <a
+          href="/vocab"
+          class="toggle-btn toggle-btn-outline nav-link-btn"
+          >📖 不背单词</a
+        >
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
           <button
@@ -44,7 +67,7 @@
       </div>
     </header>
 
-    <main class="library-layout">
+    <main id="main-content" class="library-layout">
       <aside class="library-sidebar">
         <div class="sidebar-brand">
           <div class="sidebar-crown">👑</div>
@@ -116,11 +139,11 @@
 
     <footer class="blog-footer">
       <p>
-        <a href="/" style="color:inherit;">博客</a> ·
-        <a href="/personal" style="color:inherit;">个人主页</a> ·
-        <a href="/library" style="color:inherit;">资源库</a> ·
-        <a href="/herb" style="color:inherit;">中药识别</a> ·
-        <a href="/vocab" style="color:inherit;">不背单词</a>
+        <a href="/" class="footer-link">博客</a> ·
+        <a href="/personal" class="footer-link">个人主页</a> ·
+        <a href="/library" class="footer-link">资源库</a> ·
+        <a href="/herb" class="footer-link">中药识别</a> ·
+        <a href="/vocab" class="footer-link">不背单词</a>
       </p>
       <p>© 2026 Ltto的乌托邦</p>
     </footer>
@@ -204,7 +227,7 @@
       </div>
     </div>
 
-    <script src="common.js?v=3"></script>
+    <script src="common.js?v=4"></script>
     <script src="library.js?v=4"></script>
   </body>
 </html>
