@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 
 from sqlalchemy import inspect, text
 
@@ -33,7 +34,7 @@ import bcrypt
 from backend.models import engine, Base, get_db
 from backend.auth import create_access_token, get_current_user
 from backend.herb_routes import router as herb_router
-from backend.vocab_routes import router as vocab_router
+from backend.vocab_routes import router as vocab_router, recover_expired_vocab_jobs
 
 import backend.models as models
 
@@ -44,6 +45,8 @@ import backend.schemas as schemas
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+MAX_UPLOAD_SIZE = 1000 * 1024 * 1024
+HOT_LIKE_THRESHOLD = 1
 
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -104,19 +107,39 @@ _ensure_personal_posts_media_columns()
 
 
 def _ensure_vocab_set_status_columns():
-    inspector = inspect(engine)
-    if "vocab_sets" not in inspector.get_table_names():
-        return
-    column_names = [col["name"] for col in inspector.get_columns("vocab_sets")]
-    if "status" not in column_names:
-        with engine.begin() as conn:
+    # 多个 worker 同时启动时，在同一写事务内检查并迁移，避免重复添加列。
+    with engine.begin() as conn:
+        conn.execute(text("BEGIN IMMEDIATE"))
+        inspector = inspect(conn)
+        if "vocab_sets" not in inspector.get_table_names():
+            return
+        column_names = [col["name"] for col in inspector.get_columns("vocab_sets")]
+        if "status" not in column_names:
             conn.execute(text("ALTER TABLE vocab_sets ADD COLUMN status VARCHAR(20) DEFAULT 'completed'"))
-    if "error_message" not in column_names:
-        with engine.begin() as conn:
+        if "error_message" not in column_names:
             conn.execute(text("ALTER TABLE vocab_sets ADD COLUMN error_message TEXT"))
+        if "processing_expires_at" not in column_names:
+            conn.execute(text("ALTER TABLE vocab_sets ADD COLUMN processing_expires_at DATETIME"))
+        progress_columns = {
+            "processing_deadline_at": "DATETIME",
+            "processing_finished_at": "DATETIME",
+            "parse_stage": "VARCHAR(20)",
+            "parse_progress_pct": "INTEGER DEFAULT 0",
+            "parse_stage_progress_pct": "INTEGER DEFAULT 0",
+            "processed_words": "INTEGER DEFAULT 0",
+            "total_words": "INTEGER DEFAULT 0",
+            "completed_batches": "INTEGER DEFAULT 0",
+            "total_batches": "INTEGER DEFAULT 0",
+            "progress_message": "TEXT",
+        }
+        for column, definition in progress_columns.items():
+            if column not in column_names:
+                conn.execute(text(f"ALTER TABLE vocab_sets ADD COLUMN {column} {definition}"))
 
 
 _ensure_vocab_set_status_columns()
+with models.SessionLocal() as startup_db:
+    recover_expired_vocab_jobs(startup_db)
 
 
 
@@ -220,7 +243,7 @@ def _serialize_post(db: Session, post: models.PostModel, user_id: Optional[int] 
 
         "liked": _user_liked_post(db, post.id, user_id),
 
-        "is_hot": like_count >= 1,
+        "is_hot": like_count >= HOT_LIKE_THRESHOLD,
 
     }
 
@@ -425,7 +448,14 @@ def get_post_detail(
 
 @app.post("/api/v1/posts", response_model=schemas.HttpResponseSchema)
 
-def create_new_post(payload: schemas.PostCreateSchema, db: Session = Depends(get_db)):
+def create_new_post(
+    payload: schemas.PostCreateSchema,
+    current_user: Optional[models.UserModel] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
 
     new_post = models.PostModel(
 
@@ -433,7 +463,7 @@ def create_new_post(payload: schemas.PostCreateSchema, db: Session = Depends(get
 
         content=payload.content,
 
-        author=payload.author,
+        author=current_user.username,
 
         created_at=datetime.now(timezone.utc),
 
@@ -503,6 +533,7 @@ def toggle_post_like(
     if not current_user:
         return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
 
+    models.begin_serialized_write(db)
     post = db.query(models.PostModel).filter(models.PostModel.id == post_id).first()
 
     if not post:
@@ -553,9 +584,9 @@ def toggle_post_like(
 
 
 
-    db.commit()
-
+    db.flush()
     like_count = _get_like_count(db, post_id)
+    db.commit()
 
     return schemas.HttpResponseSchema(
 
@@ -563,7 +594,7 @@ def toggle_post_like(
 
         msg="success",
 
-        data={"like_count": like_count, "liked": liked, "is_hot": like_count >= 6},
+        data={"like_count": like_count, "liked": liked, "is_hot": like_count >= HOT_LIKE_THRESHOLD},
 
     )
 
@@ -784,11 +815,12 @@ def toggle_personal_like(
     current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    models.begin_serialized_write(db)
     post = db.query(models.PersonalPostModel).filter(models.PersonalPostModel.id == post_id).first()
     if not post:
         return schemas.HttpResponseSchema(code=404, msg="内容不存在", data=None)
-    if not current_user:
-        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
     existing = db.query(models.PersonalLikeModel).filter(
         models.PersonalLikeModel.personal_post_id == post_id,
         models.PersonalLikeModel.user_id == current_user.id,
@@ -803,9 +835,10 @@ def toggle_personal_like(
             created_at=datetime.now(timezone.utc),
         ))
         liked = True
-    db.commit()
+    db.flush()
     like_count = db.query(models.PersonalLikeModel).filter(
         models.PersonalLikeModel.personal_post_id == post_id).count()
+    db.commit()
     return schemas.HttpResponseSchema(code=0, msg="success", data={"like_count": like_count, "liked": liked})
 
 
@@ -846,6 +879,24 @@ def create_personal_comment(
     return schemas.HttpResponseSchema(code=0, msg="评论成功", data=_serialize_comment(comment))
 
 
+def _save_upload_stream(source, destination: Path, max_size: int):
+    """在工作线程按块写入，超限/异常时清理未完成文件。"""
+    total = 0
+    created = False
+    try:
+        with destination.open("xb") as output:
+            created = True
+            while chunk := source.read(min(1024 * 1024, max_size - total + 1)):
+                total += len(chunk)
+                if total > max_size:
+                    raise ValueError("文件大小超过限制（1000MB）")
+                output.write(chunk)
+    except Exception:
+        if created:
+            destination.unlink(missing_ok=True)
+        raise
+
+
 @app.post("/api/v1/upload", response_model=schemas.HttpResponseSchema)
 async def upload_file(
     file: UploadFile = File(...),
@@ -863,16 +914,6 @@ async def upload_file(
     if not file.filename or not file.filename.strip():
         return schemas.HttpResponseSchema(code=400, msg="请选择有效的文件", data=None)
 
-    # 校验文件大小（1000MB）
-    MAX_SIZE = 1000 * 1024 * 1024
-    try:
-        contents = await file.read()
-    except Exception as e:
-        return schemas.HttpResponseSchema(code=500, msg=f"读取文件失败: {e}", data=None)
-
-    if len(contents) > MAX_SIZE:
-        return schemas.HttpResponseSchema(code=400, msg="文件大小超过限制（1000MB）", data=None)
-
     # 生成存储路径：uploads/YYYYMM/uuid.ext
     try:
         month_dir = datetime.now(timezone.utc).strftime("%Y%m")
@@ -883,8 +924,9 @@ async def upload_file(
         safe_name = f"{uuid.uuid4().hex}{ext}"
         dest_path = dest_dir / safe_name
 
-        with open(dest_path, "wb") as f:
-            f.write(contents)
+        await run_in_threadpool(_save_upload_stream, file.file, dest_path, MAX_UPLOAD_SIZE)
+    except ValueError as e:
+        return schemas.HttpResponseSchema(code=400, msg=str(e), data=None)
     except OSError as e:
         return schemas.HttpResponseSchema(code=500, msg=f"文件写入失败（磁盘满或权限不足）: {e}", data=None)
     except Exception as e:
@@ -994,11 +1036,12 @@ def toggle_resource_star(
     current_user: Optional[models.UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if not current_user:
+        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
+    models.begin_serialized_write(db)
     resource = db.query(models.ResourceModel).filter(models.ResourceModel.id == resource_id).first()
     if not resource:
         return schemas.HttpResponseSchema(code=404, msg="资源不存在", data=None)
-    if not current_user:
-        return schemas.HttpResponseSchema(code=403, msg="请先登录", data=None)
     existing = db.query(models.ResourceStarModel).filter(
         models.ResourceStarModel.resource_id == resource_id,
         models.ResourceStarModel.user_id == current_user.id,
@@ -1013,9 +1056,10 @@ def toggle_resource_star(
             created_at=datetime.now(timezone.utc),
         ))
         starred = True
-    db.commit()
+    db.flush()
     star_count = db.query(models.ResourceStarModel).filter(
         models.ResourceStarModel.resource_id == resource_id).count()
+    db.commit()
     return schemas.HttpResponseSchema(code=0, msg="success", data={"star_count": star_count, "starred": starred})
 
 
@@ -1065,8 +1109,17 @@ def serve_vocab():
     return FileResponse(FRONTEND_DIR / "VOCAB.html")
 
 
-app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+class UploadStaticFiles(StaticFiles):
+    """上传文件始终作为不可信文档展示，直接打开也不能执行同源脚本。"""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        # 在 StaticFiles 生成响应后添加，覆盖普通、缓存 304 和 PDF Range 响应。
+        response.headers["Content-Security-Policy"] = "sandbox"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+app.mount("/uploads", UploadStaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")
-
-

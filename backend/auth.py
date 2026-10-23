@@ -12,8 +12,10 @@ from typing import Optional
 from backend.models import get_db
 from backend import models
 
-# 密钥：生产环境通过环境变量设置，开发环境用默认值
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "blog-dev-secret-key-change-in-production")
+# 缺少密钥时拒绝启动，避免所有实例共用源码中的公开签名密钥。
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "").strip()
+if not SECRET_KEY or SECRET_KEY == "blog-dev-secret-key-change-in-production":
+    raise RuntimeError("请配置独立的 JWT_SECRET_KEY 后再启动服务")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
@@ -40,7 +42,7 @@ def decode_access_token(token: str) -> Optional[int]:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = int(payload.get("sub", 0))
         return user_id if user_id > 0 else None
-    except JWTError:
+    except (JWTError, ValueError, TypeError):
         return None
 
 

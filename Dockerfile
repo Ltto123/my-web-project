@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://dow
 # ============================================
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
+COPY scripts/docker-entrypoint.py ./scripts/docker-entrypoint.py
 
 # ============================================
 # ⑥ 声明容器监听端口（文档用途，实际不占端口）
@@ -38,4 +39,5 @@ EXPOSE 8000
 #    --host 0.0.0.0：允许外部访问（默认只监听 127.0.0.1）
 #    --port 8000：  容器内监听 8000 端口
 # ============================================
+ENTRYPOINT ["python", "/app/scripts/docker-entrypoint.py"]
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

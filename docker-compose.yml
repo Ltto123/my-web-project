@@ -8,10 +8,10 @@ services:
     ports:
       - "8000:8000"
 
-    # ③ 卷挂载：把宿主机文件/目录「映射」进容器
-    #    容器删了数据还在；修改.blog.db容器内外同步
+    # ③ 整目录持久化 SQLite 主库及 WAL/SHM；旧目录用于检测尚未升级的数据库。
     volumes:
-      - ./blog.db:/app/blog.db      # SQLite 数据库持久化
+      - ./data:/app/data           # 主库、WAL、SHM 一起持久化
+      - ./:/legacy:ro              # 检测旧库；先运行 scripts/docker-upgrade.py 完成升级
       - ./uploads:/app/uploads      # 用户上传文件持久化
       - ./backend/herb_model_data:/app/backend/herb_model_data  # AI 模型持久化
 
@@ -19,7 +19,8 @@ services:
     env_file:
       - .env                       # DEEPSEEK_API_KEY 等密钥
     environment:
-      - BLOG_OWNER_USERNAME=Ltto123
+      DATABASE_URL: sqlite:////app/data/blog.db
+      LEGACY_DATABASE_PATH: /legacy/blog.db
 
     # ⑤ 容器挂了自动重启
     restart: unless-stopped

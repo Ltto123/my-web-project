@@ -12,15 +12,26 @@ const API_BASE =
     : window.location.origin;
 
 const USER_STORAGE_KEY = "blog_token";
-let safeStorage = window.localStorage;
+// 隐私模式或存储配额限制不能让整个站点失去交互能力。
+const safeStorage = (() => {
+  const fallback = new Map();
+  const unsaved = new Set();
+  return {
+    getItem(key) { if (unsaved.has(key)) return fallback.get(key) ?? null; try { return window.localStorage.getItem(key); } catch { return fallback.get(key) ?? null; } },
+    setItem(key, value) { fallback.set(key, String(value)); try { window.localStorage.setItem(key, String(value)); unsaved.delete(key); } catch { unsaved.add(key); } },
+    removeItem(key) { fallback.delete(key); try { window.localStorage.removeItem(key); unsaved.delete(key); } catch { unsaved.add(key); } },
+    sync(key) { if (key === null) { unsaved.clear(); fallback.clear(); } else { unsaved.delete(key); fallback.delete(key); } },
+  };
+})();
 let currentUser = null;
 let ownerUsername = "";
+let logoutTimer = null;  // setTimeout ID for auto-logout on token expiry
 
 /* ===================================================================
    B. HTML / 日期 工具函数
    =================================================================== */
 function escapeHtml(text) {
-  if (!text) return "";
+  if (text == null) return "";
   return String(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -47,13 +58,35 @@ function formatPostDate(dateStr) {
 /* ===================================================================
    C. 用户会话 (localStorage + JWT)
    =================================================================== */
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(payload.padEnd(Math.ceil(payload.length / 4) * 4, "=")), c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
+
 function loadUserSession() {
+  currentUser = null;
+  if (logoutTimer) clearTimeout(logoutTimer);
+  logoutTimer = null;
   try {
     const raw = safeStorage.getItem(USER_STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      if (data && data.token) {
+      if (data && typeof data.token === "string") {
+        const payload = decodeJwtPayload(data.token);
+        const expiresAt = Number(payload?.exp) * 1000;
+        // Check expiry before restoring session
+        if (!Number.isFinite(expiresAt) || Date.now() >= expiresAt) {
+          safeStorage.removeItem(USER_STORAGE_KEY);
+          return; // token expired, don't restore
+        }
         currentUser = { token: data.token, user_id: data.user_id, username: data.username };
+        // Set auto-logout timer for the remaining time
+        scheduleAutoLogout(expiresAt);
       }
     }
   } catch {
@@ -61,18 +94,45 @@ function loadUserSession() {
   }
 }
 
+function scheduleAutoLogout(expiresAt) {
+  if (logoutTimer) clearTimeout(logoutTimer);
+  if (!expiresAt) return;
+  const delay = expiresAt - Date.now();
+  if (delay <= 0) {
+    clearUserSession();
+    updateAuthUI();
+    return;
+  }
+  logoutTimer = setTimeout(() => {
+    clearUserSession();
+    updateAuthUI();
+    showToast("登录已过期，请重新登录。", "info");
+  }, delay);
+}
+
 function saveUserSession(user) {
+  // Decode JWT to extract expiry time
+  const payload = decodeJwtPayload(user.token);
+  const expiresAt = payload && payload.exp ? payload.exp * 1000 : null; // JWT exp is in seconds
+
   currentUser = { token: user.token, user_id: user.user_id, username: user.username };
-  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
+  safeStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
+    token: user.token,
+    user_id: user.user_id,
+    username: user.username,
+    expires_at: expiresAt,
+  }));
+  scheduleAutoLogout(expiresAt);
 }
 
 function clearUserSession() {
   currentUser = null;
   safeStorage.removeItem(USER_STORAGE_KEY);
+  if (logoutTimer) { clearTimeout(logoutTimer); logoutTimer = null; }
 }
 
 function isLoggedIn() {
-  return currentUser && typeof currentUser.token === "string" && currentUser.token.length > 0;
+  return Boolean(currentUser && typeof currentUser.token === "string" && currentUser.token.length > 0);
 }
 
 function isOwner() {
@@ -102,6 +162,8 @@ function closeAuthModal() {
 }
 
 function switchAuthTab(tab) {
+  const heading = document.querySelector('#auth-heading');
+  if (heading) heading.textContent = tab === 'register' ? '从这里，开始。' : '好久不见。';
   const loginForm = document.querySelector("#login-form");
   const registerForm = document.querySelector("#register-form");
   const loginTab = document.querySelector("#auth-tab-login");
@@ -136,13 +198,15 @@ function showAuthError(formType, message) {
    E. 登录 / 注册 API 调用
    =================================================================== */
 async function loginUser(username, password) {
+  const button = document.querySelector('#login-form button[type="submit"]');
+  if (button?.disabled) return;
+  if (button) { button.disabled = true; button.textContent = "正在登录…"; }
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    const result = await requestJson(`${API_BASE}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    const result = await resp.json();
     if (result.code === 0) {
       saveUserSession(result.data);
       updateAuthUI();
@@ -150,26 +214,32 @@ async function loginUser(username, password) {
     } else {
       showAuthError("login", result.msg || "登录失败");
     }
-  } catch {
-    showAuthError("login", "网络请求失败");
+  } catch (error) {
+    showAuthError("login", error.message || "网络请求失败");
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "登录"; }
   }
 }
 
 async function registerUser(username, password) {
+  const button = document.querySelector('#register-form button[type="submit"]');
+  if (button?.disabled) return;
+  if (button) { button.disabled = true; button.textContent = "正在注册…"; }
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/auth/register`, {
+    const result = await requestJson(`${API_BASE}/api/v1/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    const result = await resp.json();
     if (result.code === 0) {
       openAuthModal("login");
     } else {
       showAuthError("register", result.msg || "注册失败");
     }
-  } catch {
-    showAuthError("register", "网络请求失败");
+  } catch (error) {
+    showAuthError("register", error.message || "网络请求失败");
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "注册"; }
   }
 }
 
@@ -194,7 +264,8 @@ function updateAuthUI() {
 
 // Cross-tab auth sync: when user logs in/out on another tab, update this tab too
 window.addEventListener("storage", (e) => {
-  if (e.key === USER_STORAGE_KEY) {
+  if (e.key === USER_STORAGE_KEY || e.key === null) {
+    safeStorage.sync(e.key);
     loadUserSession();
     updateAuthUI();
   }
@@ -202,9 +273,8 @@ window.addEventListener("storage", (e) => {
 
 async function loadSiteConfig() {
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/site-config`);
-    const result = await resp.json();
-    if (result.code === 0 && result.data) ownerUsername = result.data.owner_username || "";
+    const result = await requestJson(`${API_BASE}/api/v1/site-config`);
+    if (result.data) ownerUsername = result.data.owner_username || "";
   } catch { /* non-critical */ }
 }
 
@@ -226,7 +296,7 @@ function renderMainNav() {
   let html = "";
   for (const item of NAV_ITEMS) {
     const isActive = (currentPath === item.href) ? "active" : "";
-    html += `<a href="${item.href}" class="nav-link ${isActive}">${item.icon} ${item.label}</a>`;
+    html += `<a href="${item.href}" class="nav-link ${isActive}"${isActive ? ' aria-current="page"' : ''}>${item.label}</a>`;
   }
   container.innerHTML = html;
 }
@@ -236,12 +306,32 @@ function renderMainNav() {
    =================================================================== */
 function initThemeToggle() {
   const btn = document.querySelector("#theme-btn");
-  if (safeStorage.getItem("dark_mode_active") === "true") {
-    document.body.classList.add("dark-theme");
-  }
+  if (btn?.dataset.themeBound === "true") return;
+  const applyTone = (dark) => {
+    document.body.classList.toggle("dark-theme", dark);
+    document.documentElement.dataset.tone = dark ? "dark" : "light";
+    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    if (btn) { btn.textContent = dark ? "浅色" : "深色"; btn.setAttribute("aria-label", dark ? "切换至浅色主题" : "切换至深色主题"); btn.setAttribute("aria-pressed", String(dark)); }
+    document.dispatchEvent(new CustomEvent("tone-changed", { detail: { tone: dark ? "dark" : "light" } }));
+  };
+  const restoreTone = () => {
+    const stored = safeStorage.getItem("dark_mode_active");
+    applyTone(stored === "true" || (stored !== "false" && (document.body.dataset?.defaultTheme === "dark" || window.matchMedia?.("(prefers-color-scheme: dark)").matches)));
+  };
+  restoreTone();
+  if (btn) btn.dataset.themeBound = "true";
   btn?.addEventListener("click", () => {
-    document.body.classList.toggle("dark-theme");
-    safeStorage.setItem("dark_mode_active", document.body.classList.contains("dark-theme"));
+    const dark = !document.body.classList.contains("dark-theme");
+    safeStorage.setItem("dark_mode_active", dark);
+    applyTone(dark);
+  });
+  window.addEventListener("storage", event => {
+    if (event.key !== "dark_mode_active" && event.key !== null) return;
+    safeStorage.sync("dark_mode_active");
+    restoreTone();
+  });
+  window.addEventListener("pageshow", event => {
+    if (event.persisted) restoreTone();
   });
 }
 
@@ -280,16 +370,66 @@ function initAuthInteractions() {
 /* ===================================================================
    I. 文件上传
    =================================================================== */
+async function requestJson(url, options = {}) {
+  const { timeout = 20000, signal, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(abort, timeout);
+  document.dispatchEvent(new CustomEvent("request-start"));
+  try {
+    const response = await fetch(url, { ...fetchOptions, signal: controller.signal });
+    let result;
+    try { result = await response.json(); } catch { throw new Error("服务器返回了无法读取的响应，请稍后重试。"); }
+    if (!response.ok || result.code !== 0) {
+      const detail = Array.isArray(result.detail) ? result.detail.map(item => item.msg).join("；") : result.detail;
+      throw new Error(result.msg || detail || `请求失败（${response.status}）`);
+    }
+    return result;
+  } catch (error) {
+    if (controller.signal.aborted && !signal?.aborted) throw new Error("请求超时，请检查网络后重试。");
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", abort);
+    document.dispatchEvent(new CustomEvent("request-end"));
+  }
+}
+
+function renderLoadError(container, message, retry) {
+  if (!container) return;
+  const state = document.createElement("div");
+  state.className = "empty-posts load-error";
+  state.setAttribute("role", "alert");
+  const text = document.createElement("p");
+  text.textContent = message;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "toggle-btn toggle-btn-outline";
+  button.textContent = "重新加载";
+  button.addEventListener("click", retry, { once: true });
+  state.append(text, button);
+  container.replaceChildren(state);
+}
+
+function safeFileUrl(value) {
+  try {
+    const url = new URL(value, API_BASE);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch { return ""; }
+}
+
 async function uploadFile(file) {
+  if (!isLoggedIn()) { showToast("请先登录后再上传。"); openAuthModal("login"); throw new Error("未登录"); }
   const formData = new FormData();
   formData.append("file", file);
-  const r = await fetch(`${API_BASE}/api/v1/upload`, {
+  const result = await requestJson(`${API_BASE}/api/v1/upload`, {
     method: "POST",
     headers: { "Authorization": "Bearer " + currentUser.token },
     body: formData,
+    timeout: 300000,
   });
-  const result = await r.json();
-  if (result.code !== 0) throw new Error(result.msg || "上传失败");
   return result.data.url;
 }
 
@@ -298,7 +438,7 @@ async function uploadFile(file) {
    =================================================================== */
 function renderMarkdown(text) {
   if (!text) return "";
-  if (typeof marked === "undefined") return escapeHtml(text);
+  if (typeof marked === "undefined" || typeof DOMPurify === "undefined") return escapeHtml(text);
   const codeBlocks = [];
   let processed = text.replace(/```[\s\S]*?```/g, (m) => { codeBlocks.push(m); return `@@CB${codeBlocks.length - 1}@@`; });
   processed = processed.replace(/`([^`]+)`/g, (m) => { codeBlocks.push(m); return `@@CB${codeBlocks.length - 1}@@`; });
@@ -306,7 +446,13 @@ function renderMarkdown(text) {
   processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (m, f) => { latexItems.push({ t: "block", f: f.trim() }); return `@@LX${latexItems.length - 1}@@`; });
   processed = processed.replace(/(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)/g, (m, f) => { latexItems.push({ t: "inline", f: f.trim() }); return `@@LX${latexItems.length - 1}@@`; });
   marked.setOptions({ breaks: true, gfm: true });
-  let html = marked.parse(processed);
+  // 用户 HTML 不能借用应用 class/data 属性伪造弹窗或操作按钮。
+  // 先清理用户标记，再加入可信的 KaTeX 样式，最后再次消毒完整结果。
+  let html = DOMPurify.sanitize(marked.parse(processed), {
+    FORBID_TAGS: ["style", "form", "input", "button", "textarea", "select", "iframe"],
+    FORBID_ATTR: ["id", "name", "class", "style"],
+    ALLOW_DATA_ATTR: false,
+  });
   latexItems.forEach((item, i) => {
     const ph = `@@LX${i}@@`;
     try {
@@ -316,12 +462,16 @@ function renderMarkdown(text) {
   html = html.replace(/<p>@@CB(\d+)@@<\/p>/g, "@@CB$1@@");
   codeBlocks.forEach((code, i) => {
     const ph = `@@CB${i}@@`;
+    if (!code.startsWith("```")) {
+      html = html.replace(ph, () => `<code>${escapeHtml(code.slice(1, -1))}</code>`);
+      return;
+    }
     const inner = code.replace(/^```\w*\n?/, "").replace(/```$/, "").trim();
     const lang = (code.match(/^```(\w*)/) || [])[1] || "";
     const label = lang ? `<span class="code-lang">${lang}</span>` : "";
-    html = html.replace(ph, `<pre>${label}<code>${escapeHtml(inner)}</code></pre>`);
+    html = html.replace(ph, () => `<pre>${label}<code>${escapeHtml(inner)}</code></pre>`);
   });
-  return html;
+  return DOMPurify.sanitize(html, { FORBID_TAGS: ["style", "form", "input", "button", "textarea", "select", "iframe"], FORBID_ATTR: ["id", "name"] });
 }
 
 function renderCommentsList(comments) {
@@ -334,7 +484,7 @@ function renderCommentsList(comments) {
           <strong>${escapeHtml(comment.author)}</strong>
           <span>${formatPostDate(comment.created_at)}</span>
         </div>
-        <p class="comment-text markdown-body">${renderMarkdown(comment.content)}</p>
+        <div class="comment-text markdown-body">${renderMarkdown(comment.content)}</div>
       </div>`
     )
     .join("");
@@ -402,7 +552,12 @@ function showToast(message, type) {
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   const icons = { success: "✅", error: "❌", info: "ℹ️" };
-  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span> ${message}`;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  const icon = document.createElement("span");
+  icon.className = "toast-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = icons[type] || icons.info;
+  toast.append(icon, document.createTextNode(" " + String(message)));
   document.body.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("toast-show"));
   setTimeout(() => {
@@ -433,7 +588,7 @@ function initBackToTop() {
   }, { passive: true });
 
   btn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
 }
 

@@ -6,36 +6,32 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>个人主页 - ltto的博客</title>
-    <link rel="stylesheet" href="style.css?v=5" />
+    <link rel="stylesheet" href="style.css?v=20261023u2" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+      href="vendor/katex/katex.min.css?v=0.16.21"
     />
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="vendor/katex/katex.min.js?v=0.16.21"></script>
+    <script src="vendor/marked.umd.js?v=18.0.11"></script>
+  <link rel="stylesheet" href="utopia.css?v=20261023c1" />
+    <link rel="stylesheet" href="studio.css?v=20261023c1" />
+    <link rel="preload" href="assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
+  <body class="utopia-site dark-theme utopia-inner" data-page="personal" data-default-theme="dark">
     <a href="#main-content" class="skip-link">跳转到主内容</a>
 
     <header class="blog-header">
-      <div class="logo">Ltto的乌托邦 · 个人主页</div>
-      <div class="header-actions">
-        <a
-          href="/"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >← 返回博客</a
-        >
-        <a
-          href="/library"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >📚 资源库</a
-        >
-        <a
-          href="/herb"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >🌿 中药识别</a
-        >
+      <a class="logo" href="/" aria-label="Ltto 的乌托邦，返回首页"><span class="brand-name">ltto<sup aria-hidden="true">✳</sup></span><span class="brand-descriptor">DIGITAL<br />GARDEN</span></a>
+      <nav id="main-nav" class="blog-nav" aria-label="主导航">
+        <a href="/" class="nav-link">博客</a>
+        <a href="/personal" class="nav-link active" aria-current="page">个人主页</a>
+        <a href="/library" class="nav-link">资源库</a>
+        <a href="/vocab" class="nav-link">不背单词</a>
+        <a href="/herb" class="nav-link">中药识别</a>
+      </nav>
+      <div class="header-actions"><button id="motion-toggle" class="motion-toggle" type="button" aria-pressed="false" aria-label="暂停装饰动效"><span aria-hidden="true">Ⅱ</span><span class="motion-label">动效</span></button>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
           <button
@@ -64,10 +60,19 @@
       </div>
     </header>
 
-    <main id="main-content" class="blog-layout">
+    <main id="main-content" class="blog-layout" tabindex="-1">
+      <section class="intro-section inner-intro"><span class="inner-display" aria-hidden="true">LIFE / IN FRAGMENTS</span>
+        <div class="intro-copy">
+          <span class="section-kicker">生活手记</span>
+          <h1>日常，慢慢记录。</h1>
+          <p>关于近况、灵感和那些还没写成长文的小事。</p>
+        </div>
+
+      </section>
+      <div class="studio-toolbar"><div><span class="studio-eyebrow">THE EVERYDAY ARCHIVE</span><h2>片刻，也值得收藏。</h2></div><button type="button" class="studio-primary hidden" data-owner-only data-open-studio="#publish-section" data-studio-title="记下这一刻。" data-studio-eyebrow="A NEW FRAGMENT">写一则手记 ↗</button></div>
       <!-- 发布表单：仅博主可见 -->
-      <section id="publish-section" class="publish-form-container hidden">
-        <h3 class="publish-form-title">📝 发布个人动态</h3>
+      <section id="publish-section" data-studio-panel class="publish-form-container hidden">
+        <h3 class="publish-form-title">发布个人动态</h3>
         <form id="personal-form">
           <div class="form-field">
             <div class="markdown-toolbar">
@@ -119,7 +124,7 @@
               <span class="md-hint">支持 Markdown 和 LaTeX</span>
             </div>
             <textarea
-              id="personal-content"
+              id="personal-content" aria-label="动态正文"
               placeholder="分享你的想法...&#10;&#10;支持 Markdown：**粗体** *斜体* `代码`&#10;支持 LaTeX：$E=mc^2$  $$\int_0^1 x dx$$"
               required
               rows="6"
@@ -127,7 +132,7 @@
             ></textarea>
           </div>
           <div class="form-field">
-            <label for="image-input">📷 图片（可选）</label>
+            <label for="image-input">影像 / 可选</label>
             <input
               type="file"
               id="image-input"
@@ -138,7 +143,7 @@
             <div id="image-preview" class="upload-preview"></div>
           </div>
           <div class="form-field">
-            <label for="file-input">📎 文件（可选）</label>
+            <label for="file-input">附件 / 可选</label>
             <input
               type="file"
               id="file-input"
@@ -152,22 +157,15 @@
         </form>
       </section>
 
-      <section class="intro-section">
-        <h1>👤 博主的个人主页</h1>
-        <p>这里记录了博主的个人动态与随笔</p>
-      </section>
-
-      <div id="personal-list" class="blog-grid"></div>
+<div id="personal-list" class="blog-grid"></div>
     </main>
 
-    <footer class="blog-footer">
-      <p>© 2026 Ltto的乌托邦. Powered by pure Vanilla JS.</p>
-    </footer>
+    <footer class="blog-footer garden-footer"><div class="footer-top"><a href="/" class="footer-wordmark" aria-label="Ltto 的乌托邦首页">Ltto<span aria-hidden="true">✳</span></a><p>A SMALL CORNER.<br />AN INFINITE UNIVERSE.<br /><span>一隅天地，无限可能。</span></p><nav aria-label="页脚导航"><a href="/">文字档案</a><a href="/personal">日常切片</a><a href="/library">灵感藏书室</a><a href="/vocab">语言的形状</a><a href="/herb">草木之间</a></nav></div><div class="footer-bottom"><span>© 2026 LTTO · 记录 / 收藏 / 生长</span><span>MADE OF CURIOSITY & A LITTLE WONDER</span><a href="#main-content">BACK TO TOP ↑</a></div></footer>
 
     <!-- 登录 / 注册弹窗 -->
     <div id="auth-modal" class="auth-modal-overlay hidden">
       <div class="auth-modal-content">
-        <span id="auth-modal-close" class="custom-modal-close">×</span>
+        <button id="auth-modal-close" class="custom-modal-close" type="button" aria-label="关闭登录窗口">×</button>
         <div class="auth-tabs">
           <button
             id="auth-tab-login"
@@ -192,7 +190,7 @@
             <label for="login-username">用户名</label>
             <input
               type="text"
-              id="login-username"
+              id="login-username" autocomplete="username"
               placeholder="请输入用户名"
               required
               minlength="3"
@@ -204,14 +202,14 @@
             <label for="login-password">密码</label>
             <input
               type="password"
-              id="login-password"
+              id="login-password" autocomplete="current-password"
               placeholder="请输入密码"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="login-error" class="auth-error hidden"></p>
+          <p id="login-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">登录</button>
         </form>
 
@@ -220,7 +218,7 @@
             <label for="register-username">用户名</label>
             <input
               type="text"
-              id="register-username"
+              id="register-username" autocomplete="username"
               placeholder="3-20 个字符"
               required
               minlength="3"
@@ -232,20 +230,24 @@
             <label for="register-password">密码</label>
             <input
               type="password"
-              id="register-password"
+              id="register-password" autocomplete="new-password"
               placeholder="至少 6 位"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="register-error" class="auth-error hidden"></p>
+          <p id="register-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">注册</button>
         </form>
       </div>
     </div>
 
-    <script src="common.js?v=1"></script>
-    <script src="personal.js?v=4"></script>
+    <script src="vendor/purify.min.js?v=3.4.12"></script>
+    <script src="common.js?v=20261023i2"></script>
+    <script src="app-shell.js?v=20261023i2"></script>
+    <script src="studio.js?v=20261023i2"></script>
+    <script src="personal.js?v=20261023i2"></script>
+  <script src="utopia.js?v=20261023i2"></script>
   </body>
 </html>

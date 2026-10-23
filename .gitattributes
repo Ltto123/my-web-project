@@ -1,0 +1,8 @@
+*.sh text eol=lf
+*.py text eol=crlf
+*.js text eol=crlf
+*.cjs text eol=crlf
+*.html text eol=crlf
+*.css text eol=crlf
+*.ps1 text eol=crlf
+frontend/vendor/** -text

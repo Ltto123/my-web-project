@@ -1,0 +1,121 @@
+name = "blog-builder"
+description = "专职改动本博客 Web 项目（FastAPI 后端 + 原生 HTML/CSS/JS 前端）"
+developer_instructions = '''
+你是这个博客 Web 项目的专职开发 agent。你的唯一职责是：根据用户的需求，改代码、加功能、修 bug。
+
+## 项目总览
+
+这是一个 **全栈博客系统**，名叫「全栈空间」(ltto的博客)。前后端分离但部署在同一进程内。
+
+```
+my-project/
+├── backend/
+│   ├── main.py          ← FastAPI 应用，所有路由和业务逻辑
+│   ├── models.py        ← SQLAlchemy ORM 模型（User, Post, Like, Comment）
+│   ├── schemas.py       ← Pydantic 请求/响应 Schema
+│   └── database.py      ← 数据库引擎 (SQLite) + Session 依赖注入
+├── frontend/             ← 注意：目录名拼写是 frontend，不要改
+│   ├── BLOG.html        ← 主页面（Header + 发布区 + 博客卡片网格 + 登录弹窗）
+│   ├── style.css        ← 全部样式（含暗黑主题）
+│   └── main.js          ← 全部前端逻辑（API 调用、渲染、事件绑定）
+└── blog.db              ← SQLite 数据库文件（自动生成）
+```
+
+## 技术栈
+
+| 层       | 技术                           | 版本/备注                         |
+| -------- | ------------------------------ | --------------------------------- |
+| 后端框架 | FastAPI                        | Python                            |
+| ORM      | SQLAlchemy                     | SQLite, `check_same_thread=False` |
+| 数据库   | SQLite                         | 文件：`blog.db`，自动生成         |
+| 密码加密 | bcrypt                         | `hashpw` / `checkpw`              |
+| 数据校验 | Pydantic v2                    | `BaseModel`, `Field`              |
+| 前端     | 原生 HTML5 + CSS3 + Vanilla JS | 无任何框架                        |
+| 暗黑模式 | CSS class `body.dark-theme`    | 状态存 localStorage               |
+| 用户会话 | localStorage                   | key: `blog_current_user`          |
+
+## 运行方式
+
+```bash
+# 激活虚拟环境
+source .venv/Scripts/activate   # Windows Git Bash
+# 或 .venv\Scripts\activate     # Windows CMD
+
+# 启动后端（前端通过 FastAPI 的 StaticFiles 一起托管）
+cd /c/Users/dudu1/my-project
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+启动后访问 `http://127.0.0.1:8000` 即为博客首页。
+
+## 后端编码规范
+
+### API 响应格式
+
+所有接口统一返回 `HttpResponseSchema`:
+
+```python
+{ "code": 0, "msg": "success", "data": ... }
+```
+
+- `code=0` 表示成功
+- `code=404` 资源不存在
+- `code=10002` 用户名已注册
+- `code=10003` 用户不存在
+- `code=10004` 密码错误
+- `code=10005` 用户不存在
+
+### 序列化
+
+- 文章序列化用 `_serialize_post(db, post, user_id)`，返回 dict
+- 评论序列化用 `_serialize_comment(comment)`，返回 dict
+- 时间统一用 `_utc_iso(dt)` 转 ISO 字符串
+
+### 新增 API 端点
+
+- 路由前缀：`/api/v1/`
+- 所有端点使用 `Depends(get_db)` 注入数据库会话
+- 需要登录态的操作取 `user_id` 即可（当前无 token 鉴权，user_id 由前端传入/Query 参数传递）
+- 创建文章时 `created_at` 用 `datetime.now(timezone.utc)`
+
+### 数据库
+
+- SQLite 文件：`blog.db`
+- 不要手动删表，用 SQLAlchemy 的 `Base.metadata.create_all` 自动建表
+- 已有 `_ensure_posts_created_at_column()` 的补丁模式，遇到需要加列的可以用同样方式
+
+## 前端编码规范
+
+### API 调用
+
+- `API_BASE` 自动判断：`file://` 协议用 `http://127.0.0.1:8000`，否则用 `window.location.origin`
+- 登录态用户请求带 `?user_id=xxx` Query 参数
+- 所有 fetch 错误用 try/catch 捕获，用 `alert()` 提示用户
+
+### 渲染
+
+- 博客列表：`renderBlogGrid()` → 写入 `#blog-grid`
+- 文章详情：`openDetailModal(postId)` → 动态创建 `.custom-modal-overlay` 弹窗
+- XSS 防护：所有用户内容用 `escapeHtml()` 转义后渲染
+- HOT 标签：`like_count >= HOT_LIKE_THRESHOLD` (当前阈值=1)
+
+### 状态管理
+
+- 用户会话：`loadUserSession()` / `saveUserSession()` / `clearUserSession()`
+- 登录后 UI 刷新：`updateAuthUI()` 切换 `.hidden` 类
+- 博客列表缓存：`blogPosts` 全局数组
+
+### 暗黑主题
+
+- 切换按钮：`#theme-btn`
+- 状态存储：`localStorage.dark_mode_active === "true"`
+- 实现方式：body 上加 `.dark-theme` class，CSS 覆盖变量
+
+## 工作原则
+
+1. **先读再改**：改任何文件前必须先 Read 确认当前内容
+2. **匹配现有风格**：命名、注释、缩进（2 空格）全部对齐
+3. **前后端对齐**：改了后端 Schema/路由，前端对应的 fetch 也要改
+4. **改动后启动验证**：用 `uvicorn backend.main:app --reload` 启动，看有没有报错
+5. **不要重复发明轮子**：优先复用已有的工具函数（`escapeHtml`, `_serialize_post`, `formatPostDate` 等）
+6. **不要改目录名**：`frontend` 目录拼写保持原样'''

@@ -6,39 +6,28 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>不背单词 - ltto的博客</title>
-    <link rel="stylesheet" href="style.css?v=5" />
+    <link rel="stylesheet" href="style.css?v=20261023u2" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-</head>
-  <body>
+
+<link rel="stylesheet" href="utopia.css?v=20261023c1" />
+    <link rel="stylesheet" href="studio.css?v=20261023c1" />
+    <link rel="stylesheet" href="vocab-studio.css?v=20261023-import-progress" />
+    <link rel="preload" href="assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body class="utopia-site dark-theme utopia-inner" data-page="vocab" data-default-theme="dark">
     <a href="#main-content" class="skip-link">跳转到主内容</a>
 
     <header class="blog-header">
-      <div class="logo">📖 不背单词</div>
-      <div class="header-actions">
-        <a
-          href="/"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >← 博客</a
-        >
-        <a
-          href="/personal"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >👤 个人主页</a
-        >
-        <a
-          href="/library"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >📚 资源库</a
-        >
-        <a
-          href="/herb"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >🌿 中药识别</a
-        >
+      <a class="logo" href="/" aria-label="Ltto 的乌托邦，返回首页"><span class="brand-name">ltto<sup aria-hidden="true">✳</sup></span><span class="brand-descriptor">DIGITAL<br />GARDEN</span></a>
+      <nav id="main-nav" class="blog-nav" aria-label="主导航">
+        <a href="/" class="nav-link">博客</a>
+        <a href="/personal" class="nav-link">个人主页</a>
+        <a href="/library" class="nav-link">资源库</a>
+        <a href="/vocab" class="nav-link active" aria-current="page">不背单词</a>
+        <a href="/herb" class="nav-link">中药识别</a>
+      </nav>
+      <div class="header-actions"><button id="motion-toggle" class="motion-toggle" type="button" aria-pressed="false" aria-label="暂停装饰动效"><span aria-hidden="true">Ⅱ</span><span class="motion-label">动效</span></button>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
           <button
@@ -67,250 +56,63 @@
       </div>
     </header>
 
-    <main id="main-content" class="blog-layout">
-      <!-- Intro + Sets Grid -->
-      <section class="intro-section">
-        <h1>📖 不背单词</h1>
-        <p>上传你的单词表，AI 自动补全释义与例句，智能卡片助你高效记忆</p>
-        <p>
-          期末补天专用，抛去记忆曲线，短时间多轮次高强度复现单词，直至瞬时记忆产生
-        </p>
+    <main id="main-content" class="blog-layout vocab-studio" tabindex="-1">
+      <section id="vocab-intro" class="intro-section inner-intro">
+        <span class="inner-display" aria-hidden="true">WORD / BY WORD</span>
+        <div class="intro-copy"><span class="section-kicker">THE LANGUAGE STUDIO · 语言练习室</span>
+          <h1>不背单词</h1><p>把陌生的词，变成自己的语言。<br />从你自己的单词表，开始今天的小小练习。</p>
+        </div>
       </section>
 
-      <!-- Upload area (owner only) -->
-      <section id="vocab-upload-section" class="publish-form-container hidden">
-        <h3 class="publish-form-title">📤 上传单词文件</h3>
-        <p style="color: var(--c-text-2); font-size: 14px; margin-bottom: 12px">
-          支持任意格式文件（TXT / CSV / JSON / MD / PDF等）。系统会自动调用 AI
-          解析并补全缺失的释义与例句。
-        </p>
-        <div class="form-field">
-          <label
-            for="vocab-file-input"
-            style="font-weight: 500; margin-bottom: 6px; display: block"
-            >选择文件</label
-          >
-          <input type="file" id="vocab-file-input" class="form-input" />
+      <section id="vocab-upload-section" class="publish-form-container hidden" data-studio-panel aria-label="导入单词集">
+        <p class="vocab-panel-note">带上你的单词表，释义与例句交给 AI 补全。</p>
+        <div class="form-field vocab-file-field" data-file-custom>
+          <input type="file" id="vocab-file-input" class="vocab-file-input" aria-describedby="vocab-file-help vocab-file-name" />
+          <label for="vocab-file-input" class="vocab-file-picker"><span class="vocab-file-symbol" aria-hidden="true">↗</span><strong>选择一份单词表</strong><span id="vocab-file-name">点击选择文件</span><small id="vocab-file-help">XLSX / CSV / TXT / JSON / MD / PDF / DOCX，最大 5 MB</small></label>
         </div>
-        <div class="form-field">
-          <label
-            for="vocab-set-name"
-            style="font-weight: 500; margin-bottom: 6px; display: block"
-            >单词集名称
-            <span style="color: var(--c-text-3); font-weight: 400"
-              >（可选，默认使用文件名）</span
-            ></label
-          >
-          <input
-            type="text"
-            id="vocab-set-name"
-            class="form-input"
-            placeholder="例如：大学英语四 Unit1"
-          />
+        <div class="form-field"><label for="vocab-set-name">给词集起个名字 <span class="vocab-field-optional">可选</span></label>
+          <input type="text" id="vocab-set-name" class="form-input" placeholder="留空则使用文件名，例如：英语四 · Unit 01" />
         </div>
-        <button
-          id="vocab-upload-btn"
-          class="toggle-btn form-submit-btn"
-          type="button"
-        >
-          🤖 AI 解析并上传
-        </button>
-        <div
-          id="vocab-upload-status"
-          class="hidden"
-          style="text-align: center; padding: 16px; color: var(--c-text-2)"
-        ></div>
+        <p class="vocab-import-note">导入后可在词集卡片查看环节、AI 进度与耗时，关闭工作台或刷新页面后仍可查看。1000 词以内以 5 分钟内完成为目标；超时会显示原因。</p>
+        <button id="vocab-upload-btn" class="toggle-btn" type="button">开始解析 <span aria-hidden="true">↗</span></button>
+        <div id="vocab-upload-status" class="hidden vocab-upload-feedback" role="status" aria-live="polite"></div>
+        <button id="vocab-import-start" class="toggle-btn hidden" type="button">开始学习新词集 →</button>
       </section>
 
-      <!-- Sets Grid -->
-      <section id="vocab-sets-section">
-        <h3
-          style="
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--c-text);
-          "
-        >
-          📚 单词集
-        </h3>
+      <section id="vocab-sets-section" aria-labelledby="vocab-shelf-title">
+        <div class="vocab-shelf-toolbar"><div><span class="section-kicker">YOUR COLLECTION</span><h2 id="vocab-shelf-title">我的词集 <span id="vocab-shelf-count"></span></h2></div>
+          <button id="vocab-import-open" class="toggle-btn vocab-import-open" type="button" aria-haspopup="dialog">导入单词集 <span aria-hidden="true">＋</span></button>
+        </div>
         <div id="vocab-sets-grid" class="blog-grid"></div>
+        <p class="vocab-shelf-footnote">每次专注一个词，进步就会慢慢发生。</p>
       </section>
 
-      <!-- Learning Area (hidden until set selected) -->
-      <section id="vocab-learn-section" class="publish-form-container hidden">
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-          "
-        >
-          <div>
-            <button
-              id="vocab-back-btn"
-              class="toggle-btn toggle-btn-outline"
-              type="button"
-              style="font-size: 14px"
-            >
-              ← 返回词库列表
-            </button>
-            <span
-              id="vocab-set-title"
-              style="
-                font-size: 18px;
-                font-weight: 600;
-                margin-left: 12px;
-                color: var(--c-text);
-              "
-            ></span>
-          </div>
-          <span
-            id="vocab-progress-text"
-            style="font-size: 14px; color: var(--c-text-2)"
-          ></span>
-        </div>
-
-        <div class="vocab-progress-bar">
-          <div
-            id="vocab-progress-fill"
-            class="vocab-progress-fill"
-            style="width: 0%"
-          ></div>
-        </div>
-
-        <!-- Mode tabs -->
-        <div class="vocab-mode-tabs" style="margin-top: 16px">
-          <button class="vocab-mode-tab active" data-mode="learn">
-            🔄 单词卡片
-          </button>
-          <button class="vocab-mode-tab" data-mode="spelling">
-            ✍️ 拼写测试
-          </button>
-          <button class="vocab-mode-tab" data-mode="review">🔁 复习模式</button>
-        </div>
-
-        <!-- Flashcard Area -->
+      <section id="vocab-learn-section" class="publish-form-container hidden" tabindex="-1" aria-labelledby="vocab-set-title">
+        <div class="vocab-study-top"><button id="vocab-back-btn" class="toggle-btn toggle-btn-outline" type="button">← 我的词集</button><span class="section-kicker">FOCUS SESSION</span><span id="vocab-study-position"></span></div>
+        <div class="vocab-session-heading"><h2 id="vocab-set-title"></h2><span id="vocab-progress-text"></span></div>
+        <div class="vocab-progress-bar" role="progressbar" id="vocab-session-progress" aria-label="本轮学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="vocab-progress-fill" class="vocab-progress-fill" style="width: 0%"></div></div>
+        <div class="vocab-mode-tabs" aria-label="学习方式"><button type="button" class="vocab-mode-tab active" data-mode="learn" aria-pressed="true">单词卡片</button><button type="button" class="vocab-mode-tab" data-mode="spelling" aria-pressed="false">拼写练习</button><button type="button" class="vocab-mode-tab" data-mode="review" aria-pressed="false">温习生词</button></div>
         <div id="vocab-card-area">
-          <div class="vocab-card-scene">
-            <div class="vocab-card-inner" id="vocab-card-inner">
-              <div
-                class="vocab-card-face vocab-card-front"
-                id="vocab-card-front"
-              ></div>
-              <div
-                class="vocab-card-face vocab-card-back"
-                id="vocab-card-back"
-              ></div>
-            </div>
-          </div>
-          <div
-            class="vocab-know-buttons"
-            style="margin: 20px auto 0"
-            id="vocab-know-btns"
-          >
-            <button class="vocab-know-btn unknown" id="btn-unknown">
-              😕 不认识
-            </button>
-            <button class="vocab-know-btn know" id="btn-know">😊 认识</button>
-          </div>
-          <div class="vocab-rating-row" id="vocab-rating-row">
-            <button class="vocab-rate-btn again" id="btn-again">
-              🔄 再看看
-            </button>
-            <button class="vocab-rate-btn pass" id="btn-pass">✅ 过</button>
-          </div>
-          <div class="vocab-shortcut-hint">
-            💡 键盘快捷键：← → 翻卡 · 1-4 评分 · Enter 确认拼写 · Esc 返回
-          </div>
+          <div class="vocab-card-scene"><div class="vocab-card-inner" id="vocab-card-inner"><div class="vocab-card-face vocab-card-front" id="vocab-card-front" aria-hidden="false"></div><div class="vocab-card-face vocab-card-back" id="vocab-card-back" aria-hidden="true"></div></div></div>
+          <button id="vocab-peek-btn" class="vocab-peek-btn" type="button" aria-pressed="false">查看释义 <kbd>Space</kbd></button>
+          <div class="vocab-know-buttons" id="vocab-know-btns"><button type="button" class="vocab-know-btn unknown" id="btn-unknown"><kbd>←</kbd> 还不熟悉</button><button type="button" class="vocab-know-btn know" id="btn-know">我认识 <kbd>→</kbd></button></div>
+          <div class="vocab-rating-row" id="vocab-rating-row"><button type="button" class="vocab-rate-btn again" id="btn-again">再练一次</button><button type="button" class="vocab-rate-btn pass" id="btn-pass">记住了 →</button></div>
+          <p class="vocab-shortcut-hint">← / → 选择左 / 右操作 · 空格查看释义 · Esc 返回词集</p>
         </div>
-
-        <!-- Spelling Area -->
-        <div id="vocab-spell-area" class="hidden">
-          <div class="vocab-spelling-area">
-            <div class="vocab-spelling-def">
-              <div class="vocab-def-zh" id="spell-def-zh"></div>
-              <div
-                class="vocab-def-en"
-                id="spell-def-en"
-                style="margin-top: 8px"
-              ></div>
-            </div>
-            <div id="spell-pos-tag" class="vocab-pos-tag"></div>
-            <input
-              type="text"
-              class="vocab-spell-input"
-              id="spell-input"
-              placeholder="输入英文单词..."
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-            />
-            <div class="vocab-spell-result" id="spell-result"></div>
-            <div
-              style="display: flex; gap: 12px; width: 100%; max-width: 380px"
-            >
-              <button
-                class="vocab-rate-btn again"
-                id="btn-spell-skip"
-                style="flex: 1"
-              >
-                跳过
-              </button>
-              <button
-                class="toggle-btn form-submit-btn"
-                id="btn-spell-submit"
-                style="flex: 1; max-width: none"
-              >
-                确认
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Completion -->
-        <div id="vocab-complete-area" class="hidden">
-          <div class="vocab-complete">
-            <div class="vocab-complete-icon">🎉</div>
-            <h3 id="vocab-complete-title">本轮学习完成！</h3>
-            <p id="vocab-complete-stats"></p>
-            <button
-              class="toggle-btn"
-              id="btn-vocab-restart"
-              style="margin-right: 8px"
-            >
-              再来一轮
-            </button>
-            <button
-              class="toggle-btn toggle-btn-outline"
-              id="btn-vocab-spell-start"
-            >
-              开始拼写测试
-            </button>
-          </div>
-        </div>
+        <div id="vocab-spell-area" class="hidden"><div class="vocab-spelling-area"><span class="section-kicker">PUT IT INTO WORDS</span><div class="vocab-spelling-def"><div class="vocab-def-zh" id="spell-def-zh"></div><div class="vocab-def-en" id="spell-def-en"></div></div><div id="spell-pos-tag" class="vocab-pos-tag"></div>
+          <label class="vocab-spell-label" for="spell-input">用英文写下你的答案</label><input type="text" class="vocab-spell-input" id="spell-input" placeholder="Type your answer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="spell-result" />
+          <div class="vocab-spell-result" id="spell-result" role="status" aria-live="polite"></div><div class="vocab-spell-actions"><button type="button" class="vocab-rate-btn again" id="btn-spell-skip">先跳过</button><button type="button" class="toggle-btn" id="btn-spell-submit">确认答案 <kbd>↵</kbd></button></div><p class="vocab-shortcut-hint">Enter 确认答案 · Esc 返回词集</p></div></div>
+        <div id="vocab-review-empty" class="hidden vocab-session-empty"><span class="vocab-complete-icon" aria-hidden="true">✳</span><h3>暂时没有生词需要温习</h3><p>在卡片中选择「还不熟悉」的词，会在这里等你。</p><button id="vocab-review-learn" class="toggle-btn" type="button">开始一轮卡片练习 →</button></div>
+        <div id="vocab-complete-area" class="hidden"><div class="vocab-complete"><span class="section-kicker">A LITTLE MORE, EVERY DAY</span><div class="vocab-complete-icon" aria-hidden="true">✳</div><h3 id="vocab-complete-title">这一轮，完成了。</h3><p id="vocab-complete-stats" role="status" aria-live="polite"></p><div class="vocab-complete-actions"><button type="button" class="toggle-btn toggle-btn-outline" id="btn-vocab-restart">再来一轮</button><button type="button" class="toggle-btn" id="btn-vocab-spell-start">继续拼写练习 →</button></div></div></div>
       </section>
     </main>
 
-    <footer class="blog-footer">
-      <p>
-        <a href="/" class="footer-link">博客</a> ·
-        <a href="/personal" class="footer-link">个人主页</a> ·
-        <a href="/library" class="footer-link">资源库</a> ·
-        <a href="/herb" class="footer-link">中药识别</a> ·
-        <a href="/vocab" class="footer-link">不背单词</a>
-      </p>
-      <p>© 2026 Ltto的乌托邦 · 单词数据由 DeepSeek AI 驱动</p>
-    </footer>
+    <footer class="blog-footer garden-footer"><div class="footer-top"><a href="/" class="footer-wordmark" aria-label="Ltto 的乌托邦首页">Ltto<span aria-hidden="true">✳</span></a><p>A SMALL CORNER.<br />AN INFINITE UNIVERSE.<br /><span>一隅天地，无限可能。</span></p><nav aria-label="页脚导航"><a href="/">文字档案</a><a href="/personal">日常切片</a><a href="/library">灵感藏书室</a><a href="/vocab">语言的形状</a><a href="/herb">草木之间</a></nav></div><div class="footer-bottom"><span>© 2026 LTTO · 记录 / 收藏 / 生长</span><span>MADE OF CURIOSITY & A LITTLE WONDER</span><a href="#main-content">BACK TO TOP ↑</a></div></footer>
 
     <!-- Auth Modal (identical to all pages) -->
     <div id="auth-modal" class="auth-modal-overlay hidden">
       <div class="auth-modal-content">
-        <span id="auth-modal-close" class="custom-modal-close">×</span>
+        <button id="auth-modal-close" class="custom-modal-close" type="button" aria-label="关闭登录窗口">×</button>
         <div class="auth-tabs">
           <button
             id="auth-tab-login"
@@ -334,7 +136,7 @@
             <label for="login-username">用户名</label>
             <input
               type="text"
-              id="login-username"
+              id="login-username" autocomplete="username"
               placeholder="请输入用户名"
               required
               minlength="3"
@@ -346,14 +148,14 @@
             <label for="login-password">密码</label>
             <input
               type="password"
-              id="login-password"
+              id="login-password" autocomplete="current-password"
               placeholder="请输入密码"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="login-error" class="auth-error hidden"></p>
+          <p id="login-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">登录</button>
         </form>
         <form id="register-form" class="auth-form hidden">
@@ -361,7 +163,7 @@
             <label for="register-username">用户名</label>
             <input
               type="text"
-              id="register-username"
+              id="register-username" autocomplete="username"
               placeholder="3-20 个字符"
               required
               minlength="3"
@@ -373,20 +175,24 @@
             <label for="register-password">密码</label>
             <input
               type="password"
-              id="register-password"
+              id="register-password" autocomplete="new-password"
               placeholder="至少 6 位"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="register-error" class="auth-error hidden"></p>
+          <p id="register-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">注册</button>
         </form>
       </div>
     </div>
 
-    <script src="common.js?v=4"></script>
-    <script src="vocab.js?v=1"></script>
+    <script src="vendor/purify.min.js?v=3.4.12"></script>
+    <script src="common.js?v=20261023i2"></script>
+    <script src="app-shell.js?v=20261023i2"></script>
+    <script src="studio.js?v=20261023i2"></script>
+    <script src="vocab.js?v=20261023-import-progress"></script>
+  <script src="utopia.js?v=20261023i2"></script>
   </body>
 </html>

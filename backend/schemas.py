@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Any, List, Optional
 
 
@@ -8,12 +8,24 @@ class HttpResponseSchema(BaseModel):
     data: Optional[Any] = None
 
 
-class UserRegisterSchema(BaseModel):
+class PasswordInputSchema(BaseModel):
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        # bcrypt 的上限按 UTF-8 字节计算，中文密码也必须在这里检查。
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("密码的 UTF-8 长度不能超过 72 字节")
+        return value
+
+
+class UserRegisterSchema(PasswordInputSchema):
     username: str = Field(..., min_length=3, max_length=20, description="用户名")
     password: str = Field(..., min_length=6, description="明文密码")
 
 
-class UserLoginSchema(BaseModel):
+class UserLoginSchema(PasswordInputSchema):
     username: str = Field(..., description="用户名")
     password: str = Field(..., description="明文密码")
 
@@ -21,7 +33,7 @@ class UserLoginSchema(BaseModel):
 class PostCreateSchema(BaseModel):
     title: str = Field(..., description="文章标题")
     content: str = Field(..., description="文章正文")
-    author: str = Field(..., description="作者署名")
+    author: Optional[str] = Field(None, description="兼容旧客户端，服务端以登录用户为作者")
 
 
 class CommentCreateSchema(BaseModel):
@@ -87,11 +99,11 @@ class VocabProgressOut(BaseModel):
 
 
 class VocabProgressUpdate(BaseModel):
-    word_id: int
-    stage: int = 0
-    correct_count: int = 0
-    wrong_count: int = 0
+    word_id: int = Field(..., gt=0)
+    stage: int = Field(0, ge=0, le=1)
+    correct_count: int = Field(0, ge=0, le=2147483647)
+    wrong_count: int = Field(0, ge=0, le=2147483647)
 
 
 class VocabSpellUpdate(BaseModel):
-    word_id: int
+    word_id: int = Field(..., gt=0)

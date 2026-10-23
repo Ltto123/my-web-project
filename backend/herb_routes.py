@@ -3,6 +3,7 @@
 """
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from typing import Optional
+from starlette.concurrency import run_in_threadpool
 
 from backend.auth import get_current_user
 from backend.herb_model import predict, get_class_names, get_available_models
@@ -31,7 +32,7 @@ async def predict_herb(
         )
 
     # 校验文件是否为空
-    contents = await file.read()
+    contents = await file.read(MAX_FILE_SIZE + 1)
     if not contents:
         return schemas.HttpResponseSchema(code=400, msg="请上传图片文件", data=None)
 
@@ -45,7 +46,7 @@ async def predict_herb(
 
     # 调用模型推理
     try:
-        result = predict(contents, model_name=model)
+        result = await run_in_threadpool(predict, contents, model_name=model)
     except ValueError as e:
         return schemas.HttpResponseSchema(code=400, msg=str(e), data=None)
     except FileNotFoundError as e:

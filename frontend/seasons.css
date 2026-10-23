@@ -1,0 +1,236 @@
+/* 四季是散落在界面中的生活细节。正文始终使用实底、高对比色。 */
+html[data-appearance="spring"] body.utopia-site {
+  --c-bg:#f4f5e9; --c-surface:#fffdf6; --c-text:#243d2f; --c-text-2:#405443; --c-text-3:#52604c; --c-text-4:#52604c; --c-border:#c8d3b9;
+  --c-primary:#356345; --c-primary-hover:#234d32; --c-on-primary:#fffdf6; --c-primary-light:#e3ecd8; --c-parchment:#eaf0dc;
+  --season-petal:#efb4b6; --season-leaf:#72965c; --season-gold:#deb85b; --season-sky:#d9eadb; --season-deep:#31543d; --season-shadow:#304b2720;
+  --season-radius:22px 5px 22px 5px; --season-scene:url('assets/seasons/spring.webp');
+}
+html[data-appearance="spring"] body.utopia-site.dark-theme {
+  --c-bg:#182a24; --c-surface:#22382e; --c-text:#f4f4df; --c-text-2:#d2dfc7; --c-text-3:#bdcbb0; --c-text-4:#bdcbb0; --c-border:#4a604a;
+  --c-primary:#cce2a9; --c-primary-hover:#e0efc2; --c-on-primary:#203625; --c-primary-light:#344d36; --c-parchment:#2a4033;
+  --season-petal:#d69da7; --season-leaf:#8dae72; --season-sky:#334e41; --season-deep:#c1d7aa; --season-shadow:#07160c35;
+}
+html[data-appearance="summer"] body.utopia-site {
+  --c-bg:#eff6f3; --c-surface:#fbfdf8; --c-text:#183f47; --c-text-2:#325963; --c-text-3:#47626b; --c-text-4:#47626b; --c-border:#b8d4d7;
+  --c-primary:#17626a; --c-primary-hover:#0b4b54; --c-on-primary:#f6fffa; --c-primary-light:#dceeee; --c-parchment:#e1eeea;
+  --season-petal:#efbaa5; --season-leaf:#64866b; --season-gold:#e6c581; --season-sky:#b9e0e4; --season-deep:#347e89; --season-shadow:#16495818;
+  --season-radius:4px 28px 4px 28px; --season-scene:url('assets/seasons/summer.webp');
+}
+html[data-appearance="summer"] body.utopia-site.dark-theme {
+  --c-bg:#102c37; --c-surface:#183b46; --c-text:#eaf9f3; --c-text-2:#c7dedb; --c-text-3:#adcacb; --c-text-4:#adcacb; --c-border:#41616b;
+  --c-primary:#9cdbd6; --c-primary-hover:#c2ede7; --c-on-primary:#153740; --c-primary-light:#28515b; --c-parchment:#21454e;
+  --season-petal:#dfa997; --season-leaf:#91b196; --season-sky:#397080; --season-deep:#a4d7d8; --season-shadow:#04192340;
+}
+html[data-appearance="autumn"] body.utopia-site {
+  --c-bg:#f4edde; --c-surface:#fff9ed; --c-text:#482e24; --c-text-2:#654838; --c-text-3:#745744; --c-text-4:#745744; --c-border:#d7bfa2;
+  --c-primary:#91472f; --c-primary-hover:#74351f; --c-on-primary:#fff8ea; --c-primary-light:#f0dfc4; --c-parchment:#eee0c9;
+  --season-petal:#bd4b34; --season-leaf:#c49038; --season-gold:#e3b95e; --season-sky:#eddbb4; --season-deep:#8b4a2e; --season-shadow:#6a391c1c;
+  --season-radius:2px; --season-scene:url('assets/seasons/autumn.webp');
+}
+html[data-appearance="autumn"] body.utopia-site.dark-theme {
+  --c-bg:#30241f; --c-surface:#403028; --c-text:#fbf0dc; --c-text-2:#e5cfb1; --c-text-3:#d4b998; --c-text-4:#d4b998; --c-border:#6d5140;
+  --c-primary:#f0bd83; --c-primary-hover:#ffdab0; --c-on-primary:#422718; --c-primary-light:#59402e; --c-parchment:#49362a;
+  --season-petal:#e58e68; --season-leaf:#ceaa5b; --season-sky:#655139; --season-deep:#e6bb81; --season-shadow:#150c0840;
+}
+html[data-appearance="winter"] body.utopia-site {
+  --c-bg:#f1eee9; --c-surface:#fffcf5; --c-text:#3d3734; --c-text-2:#594d45; --c-text-3:#6b5d52; --c-text-4:#6b5d52; --c-border:#d3c5b7;
+  --c-primary:#84513b; --c-primary-hover:#653b2b; --c-on-primary:#fff9ef; --c-primary-light:#eee0d0; --c-parchment:#e8ded2;
+  --season-petal:#ca8f76; --season-leaf:#a0acaa; --season-gold:#e9b466; --season-sky:#d6e1e5; --season-deep:#855740; --season-shadow:#5944331c;
+  --season-radius:24px; --season-scene:url('assets/seasons/winter.webp');
+}
+html[data-appearance="winter"] body.utopia-site.dark-theme {
+  --c-bg:#282725; --c-surface:#37312c; --c-text:#f8efdf; --c-text-2:#e4d2bd; --c-text-3:#cebba6; --c-text-4:#cebba6; --c-border:#645749;
+  --c-primary:#edbc8c; --c-primary-hover:#ffdbb5; --c-on-primary:#3d2a20; --c-primary-light:#514034; --c-parchment:#433930;
+  --season-petal:#d39a7f; --season-leaf:#aab8b8; --season-sky:#5b6e76; --season-deep:#e6bb8f; --season-shadow:#120d093b;
+}
+html:is([data-appearance="spring"],[data-appearance="summer"],[data-appearance="autumn"],[data-appearance="winter"]) body.utopia-site {
+  --c-header:var(--c-bg); --c-success:var(--c-primary); --c-focus:color-mix(in srgb,var(--c-primary) 22%,transparent);
+  --studio-line:var(--c-border); --studio-soft:var(--c-parchment); --shadow-md:0 12px 32px var(--season-shadow); --shadow-lg:0 22px 70px var(--season-shadow);
+  --garden-acid:var(--c-primary); --garden-ink:var(--c-bg); --garden-cream:var(--c-text); --garden-muted:var(--c-text-2); --garden-hairline:var(--c-border);
+  --c-danger:#a53332; --c-danger-bg:#f9e2dc; --c-code-accent:#9c344e;
+  background-image:radial-gradient(ellipse at 0 27%,color-mix(in srgb,var(--season-sky) 22%,transparent),transparent 40%);
+}
+html:is([data-appearance="spring"],[data-appearance="summer"],[data-appearance="autumn"],[data-appearance="winter"]) body.utopia-site.dark-theme {
+  --c-danger:#ffb6ab; --c-danger-bg:#573832; --c-code-accent:#efb0b8;
+}
+html[data-appearance]:not([data-appearance="art"]) .utopia-site::selection { background:var(--c-primary); color:var(--c-on-primary); }
+html[data-appearance]:not([data-appearance="art"]) .blog-header { isolation:isolate; background:var(--c-bg); }
+html[data-appearance]:not([data-appearance="art"]) .blog-header > :not(.season-decoration) { position:relative; z-index:1; }
+html[data-appearance]:not([data-appearance="art"]) .blog-nav .nav-link { font-size:13px; }
+html[data-appearance]:not([data-appearance="art"]) .brand-descriptor { font-size:10px; }
+html[data-appearance]:not([data-appearance="art"]) :is(.section-kicker,.studio-eyebrow,.section-index) { font-size:11px; }
+html[data-appearance]:not([data-appearance="art"]) .inner-intro { padding:60px 0 55px; min-height:280px; overflow:hidden; }
+html[data-appearance]:not([data-appearance="art"]) .inner-display { font-size:clamp(32px,5vw,70px); color:var(--c-text-3); }
+html[data-appearance]:not([data-appearance="art"]) .inner-intro p { font-size:14px; }
+html[data-appearance]:not([data-appearance="art"]) .inner-intro > :not(.season-decoration) { position:relative; z-index:1; }
+
+/* Independent botanical and domestic objects, each placed in its own corner. */
+.season-decoration { display:block; pointer-events:none; user-select:none; color:var(--season-deep); }
+.season-decoration svg { display:block; width:100%; height:100%; overflow:visible; }
+.season-nav-sprig { position:absolute; top:-8px; left:calc(4.5% + 120px); width:122px; height:95px; z-index:0; opacity:.72; }
+.season-intro-art { position:absolute; right:1%; bottom:22px; width:235px; height:175px; }
+.season-card-sprig { position:absolute; right:18px; top:17px; width:54px; height:65px; z-index:0; }
+.season-reader-mark { position:absolute; right:16px; top:110px; width:85px; height:155px; }
+.season-footer-scene { width:100%; height:125px; margin:0 0 30px; overflow:hidden; }
+.season-drift { transform-origin:50% 15%; animation:season-sway 7s ease-in-out infinite; }
+.season-drift-late { animation-delay:-3s; animation-duration:9s; }
+.season-petal { animation:season-petal 10s ease-in-out infinite; transform-origin:center; }
+.season-steam { animation:season-steam 4.5s ease-out infinite; transform-origin:50% 100%; }
+.season-steam:nth-child(2) { animation-delay:-1.5s; }
+.season-steam:nth-child(3) { animation-delay:-3s; }
+.season-wave-line { animation:season-wave 9s ease-in-out infinite; }
+.season-flame { transform-origin:50% 100%; animation:season-flame 3s ease-in-out infinite; }
+.season-bookmark { position:relative; isolation:isolate; }
+.season-bookmark > :not(.season-decoration) { position:relative; z-index:1; }
+html[data-appearance]:not([data-appearance="art"]) .utopia-home .blog-card::before { display:none; }
+html[data-appearance]:not([data-appearance="art"]) .utopia-home .blog-card:first-child .card-title { max-width:90%; }
+html[data-appearance]:not([data-appearance="art"]) :is(.blog-card,.vocab-set-card) .card-meta { padding-right:56px; font-size:12px; }
+html[data-appearance]:not([data-appearance="art"]) :is(.blog-card,.vocab-set-card) .card-stats { font-size:12px; }
+html[data-appearance]:not([data-appearance="art"]) .vocab-book-top { padding-right:55px; }
+html[data-appearance]:not([data-appearance="art"]) .resource-type { padding-right:50px; }
+
+/* Spring: sunlit herbarium sheets, bent stems, softened page corners. */
+html[data-appearance="spring"] :is(.utopia-home .blog-card,.utopia-site #resource-list .blog-card,body[data-page="vocab"] .vocab-set-card) {
+  border:1px solid var(--c-border); border-radius:var(--season-radius); background:var(--c-surface); padding:32px; box-shadow:0 7px 0 -5px var(--c-parchment);
+}
+html[data-appearance="spring"] .utopia-home .blog-card:first-child { border-radius:4px 54px 4px 4px; }
+html[data-appearance="spring"] :is(.vocab-card-face,.vocab-spelling-area,.botanical-workbench,.vocab-shelf-empty) { border-radius:26px 4px 26px 4px; border:1px solid var(--c-border); }
+html[data-appearance="spring"] .utopia-site #personal-list .blog-card { padding:35px; border:1px solid var(--c-border); border-radius:2px 34px 2px 2px; background:var(--c-surface); }
+html[data-appearance="spring"] .garden-footer { background:var(--c-parchment); }
+html[data-appearance="spring"] .utopia-site :is(.studio-file-label,.vocab-file-picker) { border-radius:20px 4px 20px 4px; }
+
+/* Summer: airy postcards, blue ruled edges, a narrow stripe like a beach towel. */
+html[data-appearance="summer"] :is(.utopia-home .blog-card,.utopia-site #resource-list .blog-card,body[data-page="vocab"] .vocab-set-card) {
+  border:1px solid var(--c-border); border-radius:4px; background:var(--c-surface); padding:32px; border-bottom:5px solid var(--season-sky);
+}
+html[data-appearance="summer"] .utopia-home .blog-card:first-child { border-left:10px solid var(--season-sky); }
+html[data-appearance="summer"] .utopia-site #personal-list .blog-card { padding:30px; border:1px solid var(--c-border); border-left:6px solid var(--season-sky); background:var(--c-surface); }
+html[data-appearance="summer"] :is(.vocab-card-face,.vocab-spelling-area,.botanical-workbench,.vocab-shelf-empty) { border-radius:4px 36px 4px 36px; border:1px solid var(--c-border); }
+html[data-appearance="summer"] .utopia-site :is(.studio-file-label,.vocab-file-picker) { border-radius:4px 24px; }
+html[data-appearance="summer"] .garden-footer { background:var(--c-parchment); border-top:0; }
+html[data-appearance="summer"] .season-footer-scene { height:90px; }
+
+/* Autumn: stitched notebooks and pressed leaves, with intact writing surfaces. */
+html[data-appearance="autumn"] :is(.utopia-home .blog-card,.utopia-site #resource-list .blog-card,body[data-page="vocab"] .vocab-set-card) {
+  border:1px solid var(--c-border); border-left:4px solid var(--season-leaf); border-radius:2px; background:var(--c-surface); padding:32px 30px 32px 40px; box-shadow:5px 5px 0 -1px var(--c-bg),6px 6px 0 var(--c-border);
+}
+html[data-appearance="autumn"] .utopia-home .blog-card:first-child { border-left:6px solid var(--c-primary); }
+html[data-appearance="autumn"] .utopia-site #personal-list .blog-card { padding:35px 38px; background:var(--c-surface); border:1px solid var(--c-border); border-left:5px solid var(--season-leaf); }
+html[data-appearance="autumn"] :is(.vocab-card-face,.vocab-spelling-area,.botanical-workbench,.vocab-shelf-empty) { border-radius:2px; border:1px solid var(--c-border); box-shadow:5px 5px 0 var(--c-parchment); }
+html[data-appearance="autumn"] .utopia-site .reader-overlay .custom-modal-content { border-left:12px solid var(--c-parchment); }
+html[data-appearance="autumn"] .garden-footer { background:var(--c-parchment); }
+
+/* Winter: soft wool around solid paper, warmer rounded spaces to sit and read. */
+html[data-appearance="winter"] :is(.utopia-home .blog-card,.utopia-site #resource-list .blog-card,body[data-page="vocab"] .vocab-set-card) {
+  padding:34px; background:var(--c-surface); border:1px solid var(--c-border); border-radius:22px; box-shadow:0 10px 28px var(--season-shadow);
+}
+html[data-appearance="winter"] .utopia-home .blog-card:first-child { border-radius:30px 30px 12px 12px; }
+html[data-appearance="winter"] .utopia-site #personal-list .blog-card { padding:35px; background:var(--c-surface); border:1px solid var(--c-border); border-radius:24px; }
+html[data-appearance="winter"] :is(.vocab-card-face,.vocab-spelling-area,.botanical-workbench,.vocab-shelf-empty) { border-radius:26px; border:1px solid var(--c-border); }
+html[data-appearance="winter"] .utopia-site :is(.studio-file-label,.vocab-file-picker) { border-radius:18px; }
+html[data-appearance="winter"] .reader-overlay { background-image:repeating-linear-gradient(40deg,transparent 0 3px,color-mix(in srgb,var(--c-parchment) 16%,transparent) 3px 4px); }
+html[data-appearance="winter"] .utopia-site .reader-overlay .custom-modal-content { border-radius:22px; box-shadow:0 0 0 8px color-mix(in srgb,var(--c-parchment) 60%,transparent),0 25px 90px var(--season-shadow); }
+html[data-appearance="winter"] .garden-footer { background:var(--c-parchment); border-top:4px double var(--c-border); }
+
+/* Every utility layer receives the same material and legible text pairs. */
+html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.custom-modal-content,.auth-modal-content,.studio-confirm) { background:var(--c-surface); color:var(--c-text); }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.studio-panel-head,.reader-bar,.preview-footer) { background:var(--c-parchment); }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site .form-input { color:var(--c-text); background:var(--c-surface); padding-left:12px; padding-right:12px; }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.form-input,.search-input)::placeholder { color:var(--c-text-3); opacity:1; }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site .form-input:focus { background:var(--c-primary-light); }
+html[data-appearance]:not([data-appearance="art"]) .studio-auth-art { background:var(--c-parchment); color:var(--c-text); position:relative; isolation:isolate; overflow:hidden; }
+html[data-appearance]:not([data-appearance="art"]) .studio-auth-art::after { content:''; position:absolute; inset:45% -50px -50px 0; background-image:var(--season-scene); background-size:cover; background-position:center; border-radius:60% 0 0 0; opacity:.3; z-index:-1; }
+html[data-appearance]:not([data-appearance="art"]) .studio-auth-art .studio-eyebrow { color:var(--c-text-3); }
+html[data-appearance]:not([data-appearance="art"]) :is(.studio-auth-note,.studio-auth-word) { text-shadow:0 1px 12px var(--c-parchment); }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site .footer-top nav { font-size:13px; }
+html[data-appearance]:not([data-appearance="art"]) .footer-bottom { font-size:11px; letter-spacing:.5px; }
+html[data-appearance]:not([data-appearance="art"]) .footer-top>p { font-size:12px; }
+
+/* A place to pause: separate objects, not a collage flattened into one image. */
+.season-break { width:min(1224px,85%); margin:25px auto 90px; padding:36px 0; border-top:1px solid var(--c-border); border-bottom:1px solid var(--c-border); display:grid; grid-template-columns:.9fr 1.2fr 1fr; gap:40px; align-items:center; color:var(--c-text); }
+.season-break-copy { max-width:280px; }
+.season-break-copy>span { display:block; color:var(--c-primary); font-size:11px; letter-spacing:2px; margin-bottom:14px; }
+.season-break h2 { font:400 clamp(24px,3vw,39px)/1.45 var(--font-heading); margin:0 0 15px; }
+.season-break p { color:var(--c-text-3); font-size:13px; line-height:1.9; }
+.season-vignette { min-width:0; position:relative; text-align:center; }
+.season-vignette > .season-decoration { height:190px; width:100%; margin:0 auto; }
+.season-vignette figcaption { font-size:12px; line-height:1.8; color:var(--c-text-3); padding-top:12px; }
+.season-meadow { padding:10px 10px 0; background:var(--c-surface); border:1px solid var(--c-border); transform:rotate(-3deg); box-shadow:0 12px 30px var(--season-shadow); }
+.season-meadow img { width:100%; aspect-ratio:1.7; display:block; object-fit:cover; }
+.season-meadow figcaption { padding:12px 8px 16px; text-align:left; }
+.season-object { display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:230px; }
+.season-object>svg { display:block; width:min(220px,100%); height:130px; overflow:visible; }
+.season-object p { font-size:11px; margin-top:12px; text-align:center; }
+.season-object-toggle { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:14px; min-height:44px; max-width:100%; border:1px solid var(--c-primary); border-radius:24px; padding:10px 20px; color:var(--c-primary); background:var(--c-surface); font:400 13px var(--font); cursor:pointer; transition:background .2s,transform .2s; }
+.season-object-toggle:hover { background:var(--c-primary-light); }
+.season-object-toggle:active { transform:scale(.97); }
+.season-object-toggle:focus-visible { outline:2px solid var(--c-primary); outline-offset:4px; }
+.season-object-toggle:disabled { cursor:not-allowed; color:var(--c-text-3); border-color:var(--c-border); }
+.season-object-toggle[aria-pressed="true"] { background:var(--c-primary); color:var(--c-on-primary); }
+.season-object-toggle i { width:7px; height:7px; border:1px solid currentColor; border-radius:50%; }
+.season-object-toggle[aria-pressed="true"] i { background:currentColor; }
+.season-air-stream { opacity:0; transition:opacity .3s; }
+.season-object[data-active="true"] .season-air-stream { opacity:1; }
+.season-object[data-active="true"] .season-air-stream path { animation:season-air 3s ease-in-out infinite; }
+.season-fire-lit { opacity:.12; transition:opacity .6s; }
+.season-object[data-active="true"] .season-fire-lit { opacity:1; }
+.season-object:not([data-active="true"]) .season-flame { animation:none; }
+.season-cozy-rug { border-radius:50%; background:repeating-linear-gradient(36deg,var(--c-parchment) 0 3px,color-mix(in srgb,var(--season-petal) 20%,var(--c-parchment)) 3px 5px); }
+.season-decoration[data-season-art="sun"] { color:var(--season-gold); }
+.season-meadow > .season-icecream { width:55px; height:90px; position:absolute; right:-13px; bottom:20px; pointer-events:none; transform:rotate(13deg); }
+.season-icecream svg { width:100%; height:100%; }
+.season-break[data-season="winter"] { padding:38px; border:1px solid var(--c-border); border-radius:32px; background:var(--c-parchment); }
+.season-break[data-season="winter"] .season-cozy-rug { padding-bottom:10px; }
+html[data-appearance="art"] [data-season-owned],html:not([data-appearance]) [data-season-owned] { display:none !important; }
+body.vocab-focus-mode .season-break { display:none; }
+body.season-page-hidden :is(.season-decoration,.season-object) *,body.season-page-hidden .season-decoration { animation-play-state:paused !important; }
+@keyframes season-sway { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(3deg)} }
+@keyframes season-petal { 0%,100%{transform:translate(0,0) rotate(-4deg)} 50%{transform:translate(4px,7px) rotate(12deg)} }
+@keyframes season-steam { 0%{transform:translateY(6px);opacity:.15} 45%{opacity:.7} 100%{transform:translateY(-10px);opacity:.15} }
+@keyframes season-wave { 0%,100%{transform:translateX(-14px)} 50%{transform:translateX(14px)} }
+@keyframes season-flame { 0%,100%{transform:scale(.96,1)} 50%{transform:scale(1.04,.94)} }
+@keyframes season-air { 0%,100%{transform:translateY(0);opacity:.55} 50%{transform:translateY(7px);opacity:1} }
+@media(min-width:800px) {
+  html[data-appearance]:not([data-appearance="art"]) .inner-intro :is(h1,p) { max-width:calc(100% - 270px); }
+}
+@media(max-width:1100px) {
+  .season-reader-mark { width:48px; right:10px; opacity:.75; }
+  .season-break { gap:24px; width:90%; }
+  .season-nav-sprig { left:calc(4.5% + 80px); width:75px; }
+}
+@media(max-width:800px) {
+  .season-intro-art { position:relative; right:auto; bottom:auto; width:140px; height:105px; margin:18px 0 0 auto; }
+  html[data-appearance]:not([data-appearance="art"]) .inner-intro { padding-bottom:22px; }
+  .season-reader-mark { display:none; }
+  .season-break { grid-template-columns:1fr 1fr; gap:28px; margin-bottom:65px; }
+  .season-break-copy { grid-column:1/-1; max-width:none; }
+  .season-break-copy h2 { max-width:70%; }
+  .season-break-copy p { max-width:560px; }
+}
+@media(max-width:600px) {
+  .season-nav-sprig { left:42%; top:-10px; height:54px; width:74px; opacity:.6; }
+  .season-intro-art { width:120px; height:90px; margin-top:8px; }
+  .season-card-sprig { width:42px; height:52px; right:12px; top:12px; }
+  html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card),html[data-appearance]:not([data-appearance="art"]) .utopia-site #personal-list .blog-card { padding:26px 22px; }
+  html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card) .card-meta { padding-right:35px; font-size:11px; }
+  html[data-appearance]:not([data-appearance="art"]) .inner-intro p { font-size:13px; }
+  html[data-appearance="winter"] .utopia-site .reader-overlay .custom-modal-content { border-radius:0; box-shadow:none; }
+  html[data-appearance="autumn"] .utopia-site .reader-overlay .custom-modal-content { border-left:0; }
+  html[data-appearance]:not([data-appearance="art"]) .utopia-site .footer-top nav { font-size:12px; }
+  html[data-appearance]:not([data-appearance="art"]) .footer-bottom { font-size:10px; letter-spacing:0; }
+  .season-footer-scene { height:85px; margin-bottom:18px; }
+  .season-break { width:88%; gap:24px 18px; margin-bottom:50px; }
+  .season-break h2 { font-size:29px; max-width:none; }
+  .season-break p { font-size:12px; }
+  .season-vignette > .season-decoration { height:130px; }
+  .season-vignette figcaption { font-size:11px; }
+  .season-object { min-height:195px; }
+  .season-object>svg { height:105px; }
+  .season-object-toggle { padding:10px 11px; font-size:12px; gap:8px; }
+  .season-object p { font-size:10px; }
+  .season-break[data-season="winter"] { padding:25px 18px; }
+  .season-meadow > .season-icecream { width:38px; height:65px; right:-9px; bottom:25px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .season-decoration,.season-decoration *,.season-object * { animation:none !important; transition:none !important; }
+}

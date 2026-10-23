@@ -7,9 +7,13 @@
 # --- OS junk ---
 # --- Python / venv ---
 *.db
-*.db-shm
-*.db-wal
 *.ps1
+!publish.ps1
+*.db-wal
+*.db-shm
+.tmp/
+.playwright-mcp/
+data/
 *.pyc
 *.pyo
 .claude/
@@ -30,8 +34,3 @@ Thumbs.db
 uploads/
 backend/herb_model_data/*.pth
 project.tar.gz
-*.docx
-*.doc
-*.pptx
-*.pdf
-*.xlsx

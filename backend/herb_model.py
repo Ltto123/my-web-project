@@ -4,6 +4,7 @@
 """
 import io
 import json
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +26,7 @@ MODEL_METRICS = {
 
 # 模块级懒加载单例
 _models_cache = {}
+_model_load_lock = threading.Lock()
 _class_names = None
 _transform = None
 
@@ -86,6 +88,12 @@ def _build_model_architecture(name: str, num_classes: int):
 
 def load_model(name: str = "MobileNetV3-Large"):
     """加载指定模型并缓存"""
+    # 多个预测在工作线程并发到达时，模型只允许构建一次。
+    with _model_load_lock:
+        return _load_model_locked(name)
+
+
+def _load_model_locked(name: str):
     if name in _models_cache:
         return _models_cache[name]
 

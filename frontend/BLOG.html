@@ -5,49 +5,37 @@
     <meta name="description" content="Ltto的个人博客 - 中药识别、不背单词、资源库、个人动态" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ltto的博客</title>
-    <link rel="stylesheet" href="style.css?v=5" />
+    <title>Ltto · Utopia — 生长中的私人宇宙</title>
+    <link rel="stylesheet" href="style.css?v=20261023u2" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+
     <!-- KaTeX 数学公式渲染 -->
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+      href="vendor/katex/katex.min.css?v=0.16.21"
     />
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script src="vendor/katex/katex.min.js?v=0.16.21"></script>
     <!-- marked.js Markdown 渲染 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="vendor/marked.umd.js?v=18.0.11"></script>
+  <link rel="stylesheet" href="utopia.css?v=20261023c1" />
+    <link rel="stylesheet" href="studio.css?v=20261023c1" />
+    <link rel="preload" href="assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
+  <body class="utopia-site dark-theme utopia-home" data-page="home" data-default-theme="dark">
     <a href="#main-content" class="skip-link">跳转到主内容</a>
 
     <!-- 应用 Flexbox 实现两端对齐 -->
     <header class="blog-header">
-      <div class="logo">Ltto的乌托邦</div>
-      <div class="header-actions">
-        <a
-          href="/personal"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >👤 个人主页</a
-        >
-        <a
-          href="/library"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >📚 资源库</a
-        >
-        <a
-          href="/herb"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >🌿 中药识别</a
-        >
-        <a
-          href="/vocab"
-          class="toggle-btn toggle-btn-outline nav-link-btn"
-          >📖 不背单词</a
-        >
+      <a class="logo" href="/" aria-label="Ltto 的乌托邦，返回首页"><span class="brand-name">ltto<sup aria-hidden="true">✳</sup></span><span class="brand-descriptor">DIGITAL<br />GARDEN</span></a>
+      <nav id="main-nav" class="blog-nav" aria-label="主导航">
+        <a href="/" class="nav-link active" aria-current="page">博客</a>
+        <a href="/personal" class="nav-link">个人主页</a>
+        <a href="/library" class="nav-link">资源库</a>
+        <a href="/vocab" class="nav-link">不背单词</a>
+        <a href="/herb" class="nav-link">中药识别</a>
+      </nav>
+      <div class="header-actions"><button id="motion-toggle" class="motion-toggle" type="button" aria-pressed="false" aria-label="暂停装饰动效"><span aria-hidden="true">Ⅱ</span><span class="motion-label">动效</span></button>
         <div id="auth-user-area" class="auth-user-area hidden">
           <span id="auth-welcome" class="auth-welcome"></span>
           <button
@@ -77,15 +65,31 @@
     </header>
 
     <!-- 主体内容区 -->
-    <main id="main-content" class="blog-layout">
-      <section id="publish-section" class="publish-form-container hidden">
-        <h3 class="publish-form-title">✍️ 撰写新博文</h3>
+    <main id="main-content" class="blog-layout" tabindex="-1">
+      <section class="utopia-hero" aria-labelledby="utopia-title">
+        <div class="hero-topline"><span>A PERSONAL DIGITAL GARDEN</span><span>随笔 / 灵感 / 生长</span></div>
+        <h1 id="utopia-title" class="hero-wordmark">Utopia<span class="wordmark-period">.</span></h1>
+        <div class="hero-art" aria-hidden="true"><img src="assets/utopia/botanical.webp" width="1536" height="1024" fetchpriority="high" alt="" /><div class="hero-art-shade"></div></div>
+        <canvas id="garden-canvas" aria-hidden="true"></canvas>
+        <div class="hero-copy"><span class="hero-caption">LTTO 的乌托邦</span><h2>在字里行间，<br />自由生长。</h2><p>收藏偶然的灵感，记录未完成的自己。<br />这是我的小小宇宙，也欢迎你来散步。</p><a class="garden-enter" href="#journal"><span class="round-arrow" aria-hidden="true">↘</span><span>走进文字的花园<small>EXPLORE THE JOURNAL</small></span></a></div>
+        <div class="art-annotation" aria-hidden="true"><span class="annotation-cross">+</span><span>SPECIMEN No. 001<br />AN IMPOSSIBLE BLOOM</span></div>
+        <div class="hero-bottom"><span><i class="status-dot"></i> 永远好奇，持续生长</span><span class="scroll-cue">SCROLL TO WANDER <span aria-hidden="true">↓</span></span><span class="hero-coordinate">思想无界 · 生活有光</span></div>
+      </section>
+      <div class="garden-ribbon" aria-hidden="true"><div class="ribbon-track"><span>STAY CURIOUS <i>✳</i> KEEP GROWING <i>✳</i> MAKE ROOM FOR WONDER <i>✳</i> STAY CURIOUS <i>✳</i> KEEP GROWING <i>✳</i> MAKE ROOM FOR WONDER <i>✳</i></span></div></div>
+      <section class="garden-statement" data-reveal>
+        <div class="section-index"><span>01 / THE PHILOSOPHY</span><span class="tiny-cross" aria-hidden="true">✳</span></div>
+        <div><h2>把日子过成旷野，<br />把好奇写成<span class="statement-accent">诗。</span></h2><div class="statement-bottom"><p>知识、草木、语言，以及生活里细微的回响。<br />我在这里收集，也在这里连接。<br />不急着抵达，让每一次探索都有迹可循。</p><a class="text-link" href="/personal">关于我与日常 <span aria-hidden="true">↗</span></a></div></div>
+      </section>
+      <section id="journal" class="journal-section" aria-labelledby="journal-title">
+        <div class="journal-heading" data-reveal><div><span class="section-index">02 / FIELD NOTES</span><h2 id="journal-title">文字，<em>有迹可循。</em></h2></div><div class="journal-tools"><span id="post-count" role="status"></span><button class="text-link" id="garden-write-btn" type="button">写下一篇 <span aria-hidden="true">↗</span></button></div></div>
+      <div id="garden-compose" class="garden-compose"><section id="publish-section" data-studio-panel class="publish-form-container hidden">
+        <h3 class="publish-form-title">撰写新博文</h3>
         <form id="post-form">
           <div class="form-field">
             <input
               type="text"
-              id="post-title"
-              placeholder="请输入文章标题..."
+              id="post-title" aria-label="文章标题"
+              placeholder="给这个念头，一个名字。"
               required
               class="form-input"
             />
@@ -93,7 +97,7 @@
           <div class="form-field">
             <input
               type="text"
-              id="post-author"
+              id="post-author" aria-label="作者署名"
               placeholder="作者署名..."
               required
               class="form-input"
@@ -160,7 +164,7 @@
               <span class="md-hint">支持 Markdown 和 LaTeX 语法</span>
             </div>
             <textarea
-              id="post-content"
+              id="post-content" aria-label="文章正文"
               placeholder="在此输入正文内容...&#10;&#10;支持 Markdown：**粗体** *斜体* `代码`&#10;支持 LaTeX：行内 $E=mc^2$  块级 $$\int_0^1 x dx$$"
               required
               rows="6"
@@ -168,29 +172,25 @@
             ></textarea>
           </div>
           <button type="submit" class="toggle-btn form-submit-btn">
-            立即发布文章
+            发布文章 ↗
           </button>
         </form>
       </section>
 
       <section id="login-prompt-section" class="login-prompt-container">
-        <p>登录后即可撰写和删除博文</p>
+        <p>写一点，留一点。登录后可发布文章、参与讨论。</p>
         <button id="login-prompt-btn" class="toggle-btn" type="button">
           立即登录
         </button>
       </section>
-      <section class="intro-section">
-        <h1>Ltto的乌托邦</h1>
-        <p>喧嚣世上的一隅个人天地</p>
-      </section>
-
+      </div>
       <!-- 搜索栏 -->
       <div class="search-bar">
         <input
           type="text"
-          id="search-input"
+          id="search-input" aria-label="搜索文章标题或内容"
           class="search-input"
-          placeholder="搜索文章标题或内容..."
+          placeholder="寻找一个念头、一段文字…"
         />
         <button id="search-btn" class="toggle-btn search-btn" type="button">
           搜索
@@ -198,25 +198,26 @@
       </div>
 
       <!-- 完全交由 JS 从内存数据中渲染 -->
-      <div id="blog-grid" class="blog-grid"></div>
+      <div id="blog-grid" class="blog-grid"></div></section>
+      <section class="garden-explore" aria-labelledby="explore-title">
+        <div class="explore-heading" data-reveal><span class="section-index">03 / OTHER WORLDS</span><h2 id="explore-title">沿着好奇，<br /><em>再走远一点。</em></h2><p>四条小径，通往不同的风景。</p></div>
+        <div class="explore-paths">
+          <a class="world-link world-personal" href="/personal" data-reveal><div class="world-art"><img src="assets/utopia/botanical.webp" alt="" loading="lazy" width="1536" height="1024" /></div><span class="world-no">01 / LIFE IN FRAGMENTS</span><div class="world-name"><h3>日常切片</h3><span aria-hidden="true">↗</span></div><p>捕捉日常那些不经意的美。</p></a>
+          <a class="world-link world-library" href="/library" data-reveal><span class="world-no">02 / THE COLLECTION</span><div class="book-sculpture" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="world-name"><h3>灵感藏书室</h3><span aria-hidden="true">↗</span></div><p>值得收藏的知识，值得重逢的灵感。</p></a>
+          <a class="world-link world-vocab" href="/vocab" data-reveal><span class="world-no">03 / WORD BY WORD</span><div class="type-sculpture" aria-hidden="true">Aa<span>语 / 言</span></div><div class="world-name"><h3>语言的形状</h3><span aria-hidden="true">↗</span></div><p>认识一个词，也打开一个世界。</p></a>
+          <a class="world-link world-herb" href="/herb" data-reveal><span class="world-no">04 / BOTANICAL STUDIES</span><div class="herb-sculpture" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="world-name"><h3>草木之间</h3><span aria-hidden="true">↗</span></div><p>让技术与自然，发生一点奇妙的联系。</p></a>
+        </div>
+      </section>
+      <section class="garden-colophon" data-reveal><span class="colophon-star" aria-hidden="true">✳</span><p>世界很大，<br /><em>庆幸在这里遇见你。</em></p><a class="text-link" href="#utopia-title">再逛一遍 <span aria-hidden="true">↑</span></a></section>
     </main>
 
     <!-- 页脚区 -->
-    <footer class="blog-footer">
-      <p>
-        <a href="/" class="footer-link">博客</a> ·
-        <a href="/personal" class="footer-link">个人主页</a> ·
-        <a href="/library" class="footer-link">资源库</a> ·
-        <a href="/herb" class="footer-link">中药识别</a> ·
-        <a href="/vocab" class="footer-link">不背单词</a>
-      </p>
-      <p>© 2026 Ltto的乌托邦</p>
-    </footer>
+    <footer class="blog-footer garden-footer"><div class="footer-top"><a href="/" class="footer-wordmark" aria-label="Ltto 的乌托邦首页">Ltto<span aria-hidden="true">✳</span></a><p>A SMALL CORNER.<br />AN INFINITE UNIVERSE.<br /><span>一隅天地，无限可能。</span></p><nav aria-label="页脚导航"><a href="/">文字档案</a><a href="/personal">日常切片</a><a href="/library">灵感藏书室</a><a href="/vocab">语言的形状</a><a href="/herb">草木之间</a></nav></div><div class="footer-bottom"><span>© 2026 LTTO · 记录 / 收藏 / 生长</span><span>MADE OF CURIOSITY & A LITTLE WONDER</span><a href="#main-content">BACK TO TOP ↑</a></div></footer>
 
     <!-- 登录 / 注册弹窗 -->
     <div id="auth-modal" class="auth-modal-overlay hidden">
       <div class="auth-modal-content">
-        <span id="auth-modal-close" class="custom-modal-close">×</span>
+        <button id="auth-modal-close" class="custom-modal-close" type="button" aria-label="关闭登录窗口">×</button>
         <div class="auth-tabs">
           <button
             id="auth-tab-login"
@@ -241,7 +242,7 @@
             <label for="login-username">用户名</label>
             <input
               type="text"
-              id="login-username"
+              id="login-username" autocomplete="username"
               placeholder="请输入用户名"
               required
               minlength="3"
@@ -253,14 +254,14 @@
             <label for="login-password">密码</label>
             <input
               type="password"
-              id="login-password"
+              id="login-password" autocomplete="current-password"
               placeholder="请输入密码"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="login-error" class="auth-error hidden"></p>
+          <p id="login-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">登录</button>
         </form>
 
@@ -269,7 +270,7 @@
             <label for="register-username">用户名</label>
             <input
               type="text"
-              id="register-username"
+              id="register-username" autocomplete="username"
               placeholder="3-20 个字符"
               required
               minlength="3"
@@ -281,21 +282,25 @@
             <label for="register-password">密码</label>
             <input
               type="password"
-              id="register-password"
+              id="register-password" autocomplete="new-password"
               placeholder="至少 6 位"
               required
               minlength="6"
               class="form-input"
             />
           </div>
-          <p id="register-error" class="auth-error hidden"></p>
+          <p id="register-error" class="auth-error hidden" role="alert"></p>
           <button type="submit" class="toggle-btn form-submit-btn">注册</button>
         </form>
       </div>
     </div>
 
     <!-- 引入外部逻辑脚本 JS （放在身体最底部防止阻塞页面骨架加载） -->
-    <script src="common.js?v=4"></script>
-    <script src="main.js?v=6"></script>
+    <script src="vendor/purify.min.js?v=3.4.12"></script>
+    <script src="common.js?v=20261023i2"></script>
+    <script src="app-shell.js?v=20261023i2"></script>
+    <script src="studio.js?v=20261023i2"></script>
+    <script src="main.js?v=20261023i2"></script>
+  <script src="utopia.js?v=20261023i2"></script>
   </body>
 </html>

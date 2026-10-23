@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
+import os
 
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 # ── 数据库连接 ──
-SQLALCHEMY_DATABASE_URL = "sqlite:///./blog.db"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or "sqlite:///./blog.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
@@ -31,6 +32,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def begin_serialized_write(db: Session):
+    """SQLite 写入先取得锁，使权限核对、查重和修改成为一个短事务。"""
+    db.execute(text("BEGIN IMMEDIATE"))
 
 
 # ── ORM 模型 ──
@@ -148,6 +154,17 @@ class VocabSetModel(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
     status = Column(String(20), default="completed")  # pending/processing/completed/error
     error_message = Column(Text, nullable=True)
+    processing_expires_at = Column(DateTime, nullable=True)
+    processing_deadline_at = Column(DateTime, nullable=True)
+    processing_finished_at = Column(DateTime, nullable=True)
+    parse_stage = Column(String(20), nullable=True)
+    parse_progress_pct = Column(Integer, default=0)
+    parse_stage_progress_pct = Column(Integer, default=0)
+    processed_words = Column(Integer, default=0)
+    total_words = Column(Integer, default=0)
+    completed_batches = Column(Integer, default=0)
+    total_batches = Column(Integer, default=0)
+    progress_message = Column(Text, nullable=True)
 
 
 class VocabWordModel(Base):
