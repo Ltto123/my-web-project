@@ -67,6 +67,6 @@ ssh "${SSH_OPTS[@]}" "$HOST" 'mkdir -p /opt/blog/frontend /opt/blog/backend'
 tar -cf - -- "${selected[@]}" | ssh "${SSH_OPTS[@]}" "$HOST" 'tar -xf - -C /opt/blog'
 if "$restart_backend"; then
     printf '文件已上传，等待服务重启和健康检查。\n'
-    ssh "${SSH_OPTS[@]}" "$HOST" 'systemctl restart blog.service && systemctl is-active --quiet blog.service && curl --fail --silent --show-error --retry 8 --retry-delay 1 --retry-connrefused --max-time 10 http://127.0.0.1:8000/api/v1/health >/dev/null'
+    ssh "${SSH_OPTS[@]}" "$HOST" 'systemctl restart blog.service && systemctl is-active --quiet blog.service && curl --fail --silent --show-error --retry 30 --retry-delay 1 --retry-connrefused --retry-max-time 60 --max-time 5 http://127.0.0.1:8000/api/v1/health >/dev/null'
 fi
 printf '部署完成。\n'
