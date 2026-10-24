@@ -10,6 +10,7 @@ async (page) => {
     await page.goto(base);
     check(await page.locator('#appearance-btn').count()===1,'Appearance selector is missing');
     for(const season of ['spring','summer','autumn','winter','art']) {
+      await page.goto(base);
       await page.locator('#appearance-btn').click();
       await page.locator(`[data-choose-appearance="${season}"]`).click();
       check(await page.locator(`[data-choose-appearance="${season}"]`).getAttribute('aria-pressed')==='true','Selection state not exposed');
@@ -18,6 +19,9 @@ async (page) => {
       check(await page.evaluate(()=>document.documentElement.dataset.appearance)===season,'Theme not applied');
       await page.reload();
       check(await page.evaluate(()=>document.documentElement.dataset.appearance)===season,'Theme did not survive reload');
+      await page.emulateMedia({reducedMotion:'reduce'});
+      await page.locator('.garden-colophon .text-link').click();
+      await page.waitForFunction(()=>scrollY<150);
       for(const width of [390,1440]) {
         await page.setViewportSize({width,height:960});
         for(const route of ['/','/personal','/library','/vocab','/herb']) {
@@ -26,6 +30,10 @@ async (page) => {
           check(await page.evaluate(()=>document.documentElement.dataset.appearance)===season,'Theme lost across pages');
           check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${season} ${route} overflow at ${width}`);
           if(route==='/')check(await page.locator(season==='art'?'.utopia-hero':'.season-hero').isVisible(),'Wrong hero visibility');
+          if(season==='summer')check(await page.locator('.summer-meadow-window').evaluate(figure=>{
+            const image=figure.querySelector('img'),caption=figure.querySelector('figcaption');
+            return caption.getBoundingClientRect().top+0.5>=image.getBoundingClientRect().bottom&&getComputedStyle(caption).backgroundColor==='rgba(0, 0, 0, 0)';
+          }),'Meadow caption must remain outside the photograph without a solid box');
           results.push({season,width,route});
         }
       }

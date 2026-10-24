@@ -5,10 +5,10 @@
   const storageKey = 'blog_appearance';
   const choices = [
     { id: 'art', name: '艺术花园', english: 'THE ORIGINAL', detail: '让灵感，自由生长。', image: 'assets/utopia/botanical.webp' },
-    { id: 'spring', name: '春日漫游', english: 'SPRING', detail: '柳梢新绿，花开满途。', image: 'assets/seasons/spring.webp' },
+    { id: 'spring', name: '春日漫游', english: 'SPRING', detail: '柳梢新绿，花开满途。', image: 'assets/seasons/spring-v5.webp' },
     { id: 'summer', name: '夏日出走', english: 'SUMMER', detail: '海风、旷野和一口冰凉。', image: 'assets/seasons/sea.webp' },
-    { id: 'autumn', name: '秋日拾光', english: 'AUTUMN', detail: '红叶落下，桂香经过。', image: 'assets/seasons/autumn.webp' },
-    { id: 'winter', name: '冬日围炉', english: 'WINTER', detail: '窗外有雪，手心有暖。', image: 'assets/seasons/winter.webp' },
+    { id: 'autumn', name: '秋日拾光', english: 'AUTUMN', detail: '红叶落下，桂香经过。', image: 'assets/seasons/autumn-v2.webp' },
+    { id: 'winter', name: '冬日围炉', english: 'WINTER', detail: '窗外有雪，手心有暖。', image: 'assets/seasons/winter-v2.webp' },
   ];
   const allowed = new Set(choices.map(choice => choice.id));
   const normalize = value => allowed.has(value) ? value : 'art';
@@ -70,7 +70,7 @@
     grid.setAttribute('role', 'group');
     grid.setAttribute('aria-label', '博客外观');
     choices.forEach(choice => {
-      const button = element('button', `appearance-choice appearance-choice-${choice.id}`);
+      const button = element('button', `appearance-choice appearance-choice-${choice.id === 'art' ? 'original' : choice.id}`);
       button.type = 'button';
       button.dataset.chooseAppearance = choice.id;
       const art = element('span', 'appearance-choice-art');

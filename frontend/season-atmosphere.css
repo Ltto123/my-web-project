@@ -1,0 +1,73 @@
+/* Air fills the room; a hearth anchors it. Neither sits on a card or captures a click. */
+html:is([data-appearance="summer"],[data-appearance="winter"]) body.utopia-site { isolation:isolate; }
+html:is([data-appearance="summer"],[data-appearance="winter"]) body.utopia-site > :is(main,footer,.season-moment) { position:relative; z-index:1; }
+.season-atmosphere { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; user-select:none; contain:layout paint; }
+.season-atmosphere * { pointer-events:none; }
+.season-atmosphere svg { display:block; }
+.season-atmosphere [class^="atmosphere-"] { animation-play-state:paused; }
+.season-atmosphere[data-running="true"] [class^="atmosphere-"] { animation-play-state:running; }
+
+/* SUMMER — translucent linen, long wind trails, and cool reflected light. */
+.atmosphere-summer { --air-line:var(--season-deep); --air-light:var(--season-sky); --air-white:var(--c-surface); }
+.atmosphere-summer-wash { position:absolute; inset:0; background:radial-gradient(ellipse at 0 55%,color-mix(in srgb,var(--air-light) 38%,transparent),transparent 58%); }
+.atmosphere-cool-light { position:absolute; top:-25%; bottom:-25%; left:-35%; width:65%; background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--air-light) 42%,transparent) 48%,transparent 67%); transform:translate3d(35vw,0,0) rotate(-8deg); animation:atmosphere-light-crossing 24s ease-in-out infinite; }
+.atmosphere-wind-field { position:absolute; inset:0; width:100%; height:100%; opacity:.28; }
+.atmosphere-wind-bands { stroke:var(--air-line); stroke-width:1.3; stroke-dasharray:180 900; stroke-dashoffset:70; animation:atmosphere-wind-travel 18s linear infinite; }
+.atmosphere-wind-bands path:nth-child(2n) { stroke-width:.7; opacity:.65; }
+.atmosphere-wind-echo { stroke:var(--air-white); stroke-width:4; stroke-dasharray:75 1100; stroke-dashoffset:350; opacity:.65; animation:atmosphere-wind-travel 26s linear infinite reverse; }
+.atmosphere-curtain { position:absolute; top:70px; width:clamp(36px,7vw,112px); height:85%; background:repeating-linear-gradient(97deg,transparent 0%,color-mix(in srgb,var(--air-white) 60%,transparent) 19%,color-mix(in srgb,var(--air-line) 11%,transparent) 29%,transparent 38%); mask-image:linear-gradient(180deg,#000 4%,#000 65%,transparent 98%); border-radius:0 0 70% 0; transform-origin:50% 0; animation:atmosphere-curtain-sway 11s ease-in-out infinite; opacity:.62; }
+.atmosphere-curtain-left { left:-30px; }
+.atmosphere-curtain-right { right:-45px; transform:scaleX(-1); animation-delay:-6s; animation-direction:reverse; opacity:.4; }
+.atmosphere-wind-chime { position:absolute; right:1%; top:65px; width:70px; height:225px; opacity:.7; }
+.atmosphere-chime-thread { stroke:var(--air-line); stroke-width:1; }
+.atmosphere-chime-glass { fill:color-mix(in srgb,var(--air-white) 45%,transparent); stroke:var(--air-line); stroke-width:1; }
+.atmosphere-chime-paper { fill:var(--air-light); stroke:var(--air-line); stroke-width:.7; }
+.atmosphere-chime-swing { transform-origin:50px 82px; animation:atmosphere-chime-swing 8.5s ease-in-out infinite; }
+
+/* WINTER — low flames spread across the floor, open to the room without a frame. */
+.atmosphere-winter { --fire-amber:#f59642; --fire-gold:#ffd695; }
+.atmosphere-fire-scene { position:absolute; left:0; right:0; bottom:-1px; width:100%; height:calc(100dvh / 3 + 1px); max-width:none; overflow:hidden; opacity:.58; filter:saturate(.78) brightness(.88); mask-image:linear-gradient(0deg,#000 88%,transparent 100%); }
+html[data-tone="dark"] .atmosphere-fire-scene { opacity:.47; }
+.atmosphere-fire-photo,.atmosphere-fire-canvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
+.atmosphere-fire-photo { max-width:none; object-fit:fill; visibility:hidden; }
+.season-atmosphere[data-fire-ready="true"] .atmosphere-fire-photo { visibility:visible; }
+.atmosphere-fire-canvas { visibility:hidden; }
+.season-atmosphere[data-fire-renderer="webgl"][data-fire-animating="true"] .atmosphere-fire-photo { visibility:hidden; }
+.season-atmosphere[data-fire-renderer="webgl"][data-fire-animating="true"] .atmosphere-fire-canvas { visibility:visible; }
+.atmosphere-fire-aura { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--fire-amber) 16%,transparent),transparent 63%),radial-gradient(ellipse at 50% 80%,color-mix(in srgb,var(--fire-gold) 5%,transparent),transparent 50%); animation:atmosphere-warmth 18s ease-in-out infinite; }
+/* A continuous veil protects the reading side of the room. No rectangular backing panels. */
+.atmosphere-reading-veil { position:absolute; inset:0; background:linear-gradient(180deg,color-mix(in srgb,var(--c-bg) 96%,transparent) 0%,color-mix(in srgb,var(--c-bg) 86%,transparent) 52%,transparent 67%); }
+.atmosphere-summer .atmosphere-reading-veil { background:radial-gradient(ellipse at 47% 43%,color-mix(in srgb,var(--c-bg) 66%,transparent),transparent 70%); }
+html:is([data-appearance="summer"],[data-appearance="winter"]) :is(.inner-intro,.journal-heading,.studio-toolbar,.vocab-shelf-toolbar,.category-bar,.vocab-study-top,.vocab-session-heading,.vocab-shelf-footnote,.botanical-catalog) { background:transparent; }
+html:is([data-appearance="summer"],[data-appearance="winter"]) body[data-page="vocab"] .vocab-mode-tabs { background:transparent; }
+html[data-appearance="winter"] :is(.season-hero-note,.season-hero-top,.season-hero-bottom) { background:transparent; }
+/* Small filter labels stay readable when the fire passes directly behind them. */
+html[data-appearance="winter"] .utopia-site .category-bar .cat-btn:not(.active) { color:var(--c-text); background:color-mix(in srgb,var(--c-bg) 86%,transparent); border-radius:var(--radius-pill); }
+html[data-appearance="winter"] .utopia-site .category-bar .cat-btn:not(.active):hover { color:var(--c-primary-hover); }
+.atmosphere-dock { position:fixed; z-index:calc(var(--z-sticky) - 1); left:18px; bottom:max(18px,env(safe-area-inset-bottom)); }
+html:is([data-appearance="summer"],[data-appearance="winter"]) .utopia-site .garden-footer { padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+.atmosphere-toggle { display:flex; align-items:center; gap:10px; min-height:46px; padding:10px 16px; border:1px solid var(--c-border); border-radius:30px; background:var(--c-surface); color:var(--c-text); box-shadow:0 4px 18px var(--season-shadow); font:12px/1.5 var(--font); cursor:pointer; transition:transform .2s,border-color .2s; }
+.atmosphere-control-icon { width:20px; height:20px; flex:none; stroke:currentColor; stroke-width:1.25; stroke-linecap:round; stroke-linejoin:round; }
+.atmosphere-toggle[aria-pressed="true"] .atmosphere-control-icon { color:var(--c-primary); }
+.atmosphere-toggle:hover { border-color:var(--c-primary); transform:translateY(-2px); }
+.atmosphere-toggle:active { transform:scale(.97); }
+.atmosphere-toggle:focus-visible { outline:2px solid var(--c-primary); outline-offset:4px; }
+.atmosphere-toggle:disabled { color:var(--c-text-3); cursor:default; transform:none; }
+:is(.dialog-open,.vocab-focus-mode) .atmosphere-dock { visibility:hidden; pointer-events:none; }
+.vocab-focus-mode .season-atmosphere { opacity:.35; }
+
+@keyframes atmosphere-wind-travel { from{stroke-dashoffset:1100} to{stroke-dashoffset:-1100} }
+@keyframes atmosphere-light-crossing { 0%,100%{transform:translate3d(-20vw,0,0) rotate(-8deg);opacity:0} 25%,65%{opacity:.75} 85%{transform:translate3d(125vw,0,0) rotate(-8deg);opacity:0} }
+@keyframes atmosphere-curtain-sway { 0%,100%{translate:0 0;rotate:-1deg} 50%{translate:18px 0;rotate:2deg} }
+@keyframes atmosphere-chime-swing { 0%,100%{transform:rotate(-4deg)} 46%{transform:rotate(7deg)} 78%{transform:rotate(-1deg)} }
+@keyframes atmosphere-warmth { 0%,100%{opacity:.82} 50%{opacity:.9} }
+@media(max-width:900px) { .atmosphere-wind-chime { width:50px; right:-1%; } }
+@media(max-width:600px) {
+  .atmosphere-dock { left:12px; bottom:max(12px,env(safe-area-inset-bottom)); }
+  .atmosphere-toggle { min-height:44px; padding:10px 13px; gap:8px; font-size:11px; }
+  .atmosphere-control-icon { width:18px;height:18px; }
+  .atmosphere-curtain { width:65px; height:90%; }
+  .atmosphere-wind-chime { width:40px; right:-5px; top:105px; opacity:.45; }
+  .atmosphere-wind-field { opacity:.18; }
+}
+@media(prefers-reduced-motion:reduce) { .season-atmosphere *, .atmosphere-toggle { animation:none!important; transition:none!important; } }

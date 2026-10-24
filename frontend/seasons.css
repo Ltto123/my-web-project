@@ -3,9 +3,9 @@ html[data-appearance="spring"] body.utopia-site {
   --c-bg:#f4f5e9; --c-surface:#fffdf6; --c-text:#243d2f; --c-text-2:#405443; --c-text-3:#52604c; --c-text-4:#52604c; --c-border:#c8d3b9;
   --c-primary:#356345; --c-primary-hover:#234d32; --c-on-primary:#fffdf6; --c-primary-light:#e3ecd8; --c-parchment:#eaf0dc;
   --season-petal:#efb4b6; --season-leaf:#72965c; --season-gold:#deb85b; --season-sky:#d9eadb; --season-deep:#31543d; --season-shadow:#304b2720;
-  --season-radius:22px 5px 22px 5px; --season-scene:url('assets/seasons/spring.webp');
+  --season-radius:22px 5px 22px 5px; --season-scene:url('assets/seasons/spring-v5.webp');
 }
-html[data-appearance="spring"] body.utopia-site.dark-theme {
+html[data-appearance="spring"][data-tone="dark"] body.utopia-site {
   --c-bg:#182a24; --c-surface:#22382e; --c-text:#f4f4df; --c-text-2:#d2dfc7; --c-text-3:#bdcbb0; --c-text-4:#bdcbb0; --c-border:#4a604a;
   --c-primary:#cce2a9; --c-primary-hover:#e0efc2; --c-on-primary:#203625; --c-primary-light:#344d36; --c-parchment:#2a4033;
   --season-petal:#d69da7; --season-leaf:#8dae72; --season-sky:#334e41; --season-deep:#c1d7aa; --season-shadow:#07160c35;
@@ -14,9 +14,9 @@ html[data-appearance="summer"] body.utopia-site {
   --c-bg:#eff6f3; --c-surface:#fbfdf8; --c-text:#183f47; --c-text-2:#325963; --c-text-3:#47626b; --c-text-4:#47626b; --c-border:#b8d4d7;
   --c-primary:#17626a; --c-primary-hover:#0b4b54; --c-on-primary:#f6fffa; --c-primary-light:#dceeee; --c-parchment:#e1eeea;
   --season-petal:#efbaa5; --season-leaf:#64866b; --season-gold:#e6c581; --season-sky:#b9e0e4; --season-deep:#347e89; --season-shadow:#16495818;
-  --season-radius:4px 28px 4px 28px; --season-scene:url('assets/seasons/summer.webp');
+  --season-radius:4px 28px 4px 28px; --season-scene:url('assets/seasons/sea.webp');
 }
-html[data-appearance="summer"] body.utopia-site.dark-theme {
+html[data-appearance="summer"][data-tone="dark"] body.utopia-site {
   --c-bg:#102c37; --c-surface:#183b46; --c-text:#eaf9f3; --c-text-2:#c7dedb; --c-text-3:#adcacb; --c-text-4:#adcacb; --c-border:#41616b;
   --c-primary:#9cdbd6; --c-primary-hover:#c2ede7; --c-on-primary:#153740; --c-primary-light:#28515b; --c-parchment:#21454e;
   --season-petal:#dfa997; --season-leaf:#91b196; --season-sky:#397080; --season-deep:#a4d7d8; --season-shadow:#04192340;
@@ -25,9 +25,9 @@ html[data-appearance="autumn"] body.utopia-site {
   --c-bg:#f4edde; --c-surface:#fff9ed; --c-text:#482e24; --c-text-2:#654838; --c-text-3:#745744; --c-text-4:#745744; --c-border:#d7bfa2;
   --c-primary:#91472f; --c-primary-hover:#74351f; --c-on-primary:#fff8ea; --c-primary-light:#f0dfc4; --c-parchment:#eee0c9;
   --season-petal:#bd4b34; --season-leaf:#c49038; --season-gold:#e3b95e; --season-sky:#eddbb4; --season-deep:#8b4a2e; --season-shadow:#6a391c1c;
-  --season-radius:2px; --season-scene:url('assets/seasons/autumn.webp');
+  --season-radius:2px; --season-scene:url('assets/seasons/autumn-v2.webp');
 }
-html[data-appearance="autumn"] body.utopia-site.dark-theme {
+html[data-appearance="autumn"][data-tone="dark"] body.utopia-site {
   --c-bg:#30241f; --c-surface:#403028; --c-text:#fbf0dc; --c-text-2:#e5cfb1; --c-text-3:#d4b998; --c-text-4:#d4b998; --c-border:#6d5140;
   --c-primary:#f0bd83; --c-primary-hover:#ffdab0; --c-on-primary:#422718; --c-primary-light:#59402e; --c-parchment:#49362a;
   --season-petal:#e58e68; --season-leaf:#ceaa5b; --season-sky:#655139; --season-deep:#e6bb81; --season-shadow:#150c0840;
@@ -36,9 +36,9 @@ html[data-appearance="winter"] body.utopia-site {
   --c-bg:#f1eee9; --c-surface:#fffcf5; --c-text:#3d3734; --c-text-2:#594d45; --c-text-3:#6b5d52; --c-text-4:#6b5d52; --c-border:#d3c5b7;
   --c-primary:#84513b; --c-primary-hover:#653b2b; --c-on-primary:#fff9ef; --c-primary-light:#eee0d0; --c-parchment:#e8ded2;
   --season-petal:#ca8f76; --season-leaf:#a0acaa; --season-gold:#e9b466; --season-sky:#d6e1e5; --season-deep:#855740; --season-shadow:#5944331c;
-  --season-radius:24px; --season-scene:url('assets/seasons/winter.webp');
+  --season-radius:24px; --season-scene:url('assets/seasons/winter-v2.webp');
 }
-html[data-appearance="winter"] body.utopia-site.dark-theme {
+html[data-appearance="winter"][data-tone="dark"] body.utopia-site {
   --c-bg:#282725; --c-surface:#37312c; --c-text:#f8efdf; --c-text-2:#e4d2bd; --c-text-3:#cebba6; --c-text-4:#cebba6; --c-border:#645749;
   --c-primary:#edbc8c; --c-primary-hover:#ffdbb5; --c-on-primary:#3d2a20; --c-primary-light:#514034; --c-parchment:#433930;
   --season-petal:#d39a7f; --season-leaf:#aab8b8; --season-sky:#5b6e76; --season-deep:#e6bb8f; --season-shadow:#120d093b;
@@ -49,11 +49,13 @@ html:is([data-appearance="spring"],[data-appearance="summer"],[data-appearance="
   --garden-acid:var(--c-primary); --garden-ink:var(--c-bg); --garden-cream:var(--c-text); --garden-muted:var(--c-text-2); --garden-hairline:var(--c-border);
   --c-danger:#a53332; --c-danger-bg:#f9e2dc; --c-code-accent:#9c344e;
   background-image:radial-gradient(ellipse at 0 27%,color-mix(in srgb,var(--season-sky) 22%,transparent),transparent 40%);
+  transition:none;
 }
-html:is([data-appearance="spring"],[data-appearance="summer"],[data-appearance="autumn"],[data-appearance="winter"]) body.utopia-site.dark-theme {
+html:is([data-appearance="spring"],[data-appearance="summer"],[data-appearance="autumn"],[data-appearance="winter"])[data-tone="dark"] body.utopia-site {
   --c-danger:#ffb6ab; --c-danger-bg:#573832; --c-code-accent:#efb0b8;
 }
 html[data-appearance]:not([data-appearance="art"]) .utopia-site::selection { background:var(--c-primary); color:var(--c-on-primary); }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card,.toggle-btn,.cat-btn,.nav-link,.preview-btn,.card-open-btn,.studio-primary,.studio-secondary) { transition-property:transform,border-color,box-shadow; }
 html[data-appearance]:not([data-appearance="art"]) .blog-header { isolation:isolate; background:var(--c-bg); }
 html[data-appearance]:not([data-appearance="art"]) .blog-header > :not(.season-decoration) { position:relative; z-index:1; }
 html[data-appearance]:not([data-appearance="art"]) .blog-nav .nav-link { font-size:13px; }
@@ -64,30 +66,13 @@ html[data-appearance]:not([data-appearance="art"]) .inner-display { font-size:cl
 html[data-appearance]:not([data-appearance="art"]) .inner-intro p { font-size:14px; }
 html[data-appearance]:not([data-appearance="art"]) .inner-intro > :not(.season-decoration) { position:relative; z-index:1; }
 
-/* Independent botanical and domestic objects, each placed in its own corner. */
+/* Objects occupy their own space; they never sit on text or controls. */
 .season-decoration { display:block; pointer-events:none; user-select:none; color:var(--season-deep); }
 .season-decoration svg { display:block; width:100%; height:100%; overflow:visible; }
-.season-nav-sprig { position:absolute; top:-8px; left:calc(4.5% + 120px); width:122px; height:95px; z-index:0; opacity:.72; }
-.season-intro-art { position:absolute; right:1%; bottom:22px; width:235px; height:175px; }
-.season-card-sprig { position:absolute; right:18px; top:17px; width:54px; height:65px; z-index:0; }
-.season-reader-mark { position:absolute; right:16px; top:110px; width:85px; height:155px; }
-.season-footer-scene { width:100%; height:125px; margin:0 0 30px; overflow:hidden; }
 .season-drift { transform-origin:50% 15%; animation:season-sway 7s ease-in-out infinite; }
-.season-drift-late { animation-delay:-3s; animation-duration:9s; }
 .season-petal { animation:season-petal 10s ease-in-out infinite; transform-origin:center; }
-.season-steam { animation:season-steam 4.5s ease-out infinite; transform-origin:50% 100%; }
-.season-steam:nth-child(2) { animation-delay:-1.5s; }
-.season-steam:nth-child(3) { animation-delay:-3s; }
-.season-wave-line { animation:season-wave 9s ease-in-out infinite; }
-.season-flame { transform-origin:50% 100%; animation:season-flame 3s ease-in-out infinite; }
-.season-bookmark { position:relative; isolation:isolate; }
-.season-bookmark > :not(.season-decoration) { position:relative; z-index:1; }
 html[data-appearance]:not([data-appearance="art"]) .utopia-home .blog-card::before { display:none; }
-html[data-appearance]:not([data-appearance="art"]) .utopia-home .blog-card:first-child .card-title { max-width:90%; }
-html[data-appearance]:not([data-appearance="art"]) :is(.blog-card,.vocab-set-card) .card-meta { padding-right:56px; font-size:12px; }
-html[data-appearance]:not([data-appearance="art"]) :is(.blog-card,.vocab-set-card) .card-stats { font-size:12px; }
-html[data-appearance]:not([data-appearance="art"]) .vocab-book-top { padding-right:55px; }
-html[data-appearance]:not([data-appearance="art"]) .resource-type { padding-right:50px; }
+html[data-appearance]:not([data-appearance="art"]) :is(.blog-card,.vocab-set-card) :is(.card-meta,.card-stats) { font-size:12px; }
 
 /* Spring: sunlit herbarium sheets, bent stems, softened page corners. */
 html[data-appearance="spring"] :is(.utopia-home .blog-card,.utopia-site #resource-list .blog-card,body[data-page="vocab"] .vocab-set-card) {
@@ -138,99 +123,88 @@ html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.studio-pane
 html[data-appearance]:not([data-appearance="art"]) .utopia-site .form-input { color:var(--c-text); background:var(--c-surface); padding-left:12px; padding-right:12px; }
 html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.form-input,.search-input)::placeholder { color:var(--c-text-3); opacity:1; }
 html[data-appearance]:not([data-appearance="art"]) .utopia-site .form-input:focus { background:var(--c-primary-light); }
+html[data-appearance]:not([data-appearance="art"]) .utopia-site .studio-password .form-input { padding-right:58px; }
 html[data-appearance]:not([data-appearance="art"]) .studio-auth-art { background:var(--c-parchment); color:var(--c-text); position:relative; isolation:isolate; overflow:hidden; }
 html[data-appearance]:not([data-appearance="art"]) .studio-auth-art::after { content:''; position:absolute; inset:45% -50px -50px 0; background-image:var(--season-scene); background-size:cover; background-position:center; border-radius:60% 0 0 0; opacity:.3; z-index:-1; }
 html[data-appearance]:not([data-appearance="art"]) .studio-auth-art .studio-eyebrow { color:var(--c-text-3); }
 html[data-appearance]:not([data-appearance="art"]) :is(.studio-auth-note,.studio-auth-word) { text-shadow:0 1px 12px var(--c-parchment); }
+html[data-appearance]:not([data-appearance="art"]) .studio-auth-note { background:var(--c-parchment); padding:10px; border-radius:3px; }
 html[data-appearance]:not([data-appearance="art"]) .utopia-site .footer-top nav { font-size:13px; }
 html[data-appearance]:not([data-appearance="art"]) .footer-bottom { font-size:11px; letter-spacing:.5px; }
 html[data-appearance]:not([data-appearance="art"]) .footer-top>p { font-size:12px; }
+html[data-appearance]:not([data-appearance="art"]) .world-personal .world-art { background:var(--season-scene) center/cover; }
+html[data-appearance]:not([data-appearance="art"]) .world-personal .world-art img { display:none; }
+html[data-appearance]:not([data-appearance="art"]) .world-art::after { background:linear-gradient(0deg,var(--c-bg) 0%,var(--c-bg) 29%,transparent 78%); }
+html[data-appearance]:not([data-appearance="art"]) .world-link p { font-size:12px; }
 
-/* A place to pause: separate objects, not a collage flattened into one image. */
-.season-break { width:min(1224px,85%); margin:25px auto 90px; padding:36px 0; border-top:1px solid var(--c-border); border-bottom:1px solid var(--c-border); display:grid; grid-template-columns:.9fr 1.2fr 1fr; gap:40px; align-items:center; color:var(--c-text); }
-.season-break-copy { max-width:280px; }
-.season-break-copy>span { display:block; color:var(--c-primary); font-size:11px; letter-spacing:2px; margin-bottom:14px; }
-.season-break h2 { font:400 clamp(24px,3vw,39px)/1.45 var(--font-heading); margin:0 0 15px; }
-.season-break p { color:var(--c-text-3); font-size:13px; line-height:1.9; }
-.season-vignette { min-width:0; position:relative; text-align:center; }
-.season-vignette > .season-decoration { height:190px; width:100%; margin:0 auto; }
-.season-vignette figcaption { font-size:12px; line-height:1.8; color:var(--c-text-3); padding-top:12px; }
-.season-meadow { padding:10px 10px 0; background:var(--c-surface); border:1px solid var(--c-border); transform:rotate(-3deg); box-shadow:0 12px 30px var(--season-shadow); }
-.season-meadow img { width:100%; aspect-ratio:1.7; display:block; object-fit:cover; }
-.season-meadow figcaption { padding:12px 8px 16px; text-align:left; }
-.season-object { display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:230px; }
-.season-object>svg { display:block; width:min(220px,100%); height:130px; overflow:visible; }
-.season-object p { font-size:11px; margin-top:12px; text-align:center; }
-.season-object-toggle { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:14px; min-height:44px; max-width:100%; border:1px solid var(--c-primary); border-radius:24px; padding:10px 20px; color:var(--c-primary); background:var(--c-surface); font:400 13px var(--font); cursor:pointer; transition:background .2s,transform .2s; }
-.season-object-toggle:hover { background:var(--c-primary-light); }
-.season-object-toggle:active { transform:scale(.97); }
-.season-object-toggle:focus-visible { outline:2px solid var(--c-primary); outline-offset:4px; }
-.season-object-toggle:disabled { cursor:not-allowed; color:var(--c-text-3); border-color:var(--c-border); }
-.season-object-toggle[aria-pressed="true"] { background:var(--c-primary); color:var(--c-on-primary); }
-.season-object-toggle i { width:7px; height:7px; border:1px solid currentColor; border-radius:50%; }
-.season-object-toggle[aria-pressed="true"] i { background:currentColor; }
-.season-air-stream { opacity:0; transition:opacity .3s; }
-.season-object[data-active="true"] .season-air-stream { opacity:1; }
-.season-object[data-active="true"] .season-air-stream path { animation:season-air 3s ease-in-out infinite; }
-.season-fire-lit { opacity:.12; transition:opacity .6s; }
-.season-object[data-active="true"] .season-fire-lit { opacity:1; }
-.season-object:not([data-active="true"]) .season-flame { animation:none; }
-.season-cozy-rug { border-radius:50%; background:repeating-linear-gradient(36deg,var(--c-parchment) 0 3px,color-mix(in srgb,var(--season-petal) 20%,var(--c-parchment)) 3px 5px); }
-.season-decoration[data-season-art="sun"] { color:var(--season-gold); }
-.season-meadow > .season-icecream { width:55px; height:90px; position:absolute; right:-13px; bottom:20px; pointer-events:none; transform:rotate(13deg); }
-.season-icecream svg { width:100%; height:100%; }
-.season-break[data-season="winter"] { padding:38px; border:1px solid var(--c-border); border-radius:32px; background:var(--c-parchment); }
-.season-break[data-season="winter"] .season-cozy-rug { padding-bottom:10px; }
+/* Each season has a different spatial rhythm, not interchangeable corner stamps. */
+.season-moment { width:min(1224px,85%); margin:65px auto 100px; color:var(--c-text); position:relative; }
+.season-moment *, .season-moment *::before, .season-moment *::after { box-sizing:border-box; }
+.season-moment img { display:block; max-width:100%; }
+.season-moment-copy { min-width:0; position:relative; z-index:1; }
+.season-moment-label { display:block; font:400 11px/1.8 var(--font); letter-spacing:2px; color:var(--c-primary); margin-bottom:18px; }
+.season-moment h2 { margin:0 0 20px; font:400 clamp(27px,3.5vw,48px)/1.5 var(--font-heading); white-space:pre-line; }
+.season-moment p { color:var(--c-text-3); font-size:14px; line-height:2; max-width:390px; margin:0; }
+.spring-canopy { position:absolute; width:120px; height:115px; top:-17px; left:23%; opacity:.68; z-index:0; }
+.spring-garden { display:grid; grid-template-columns:1.1fr 1fr; align-items:center; min-height:330px; padding:45px 8% 70px; }
+.spring-blossom-branch { width:190px; height:270px; transform:rotate(-28deg); justify-self:center; }
+.spring-petal-trail { position:absolute; bottom:0; left:6%; width:88%; height:100px; overflow:hidden; }
+.summer-gelato { display:grid; grid-template-columns:1fr 280px; gap:60px; align-items:center; width:min(900px,85%); padding:30px 60px; border-block:1px solid var(--c-border); margin-top:40px; margin-bottom:100px; }
+.summer-gelato-cone { width:100%; min-width:0; margin:0; position:relative; }
+.summer-gelato-cone img { width:100%; height:330px; object-fit:contain; filter:drop-shadow(8px 16px 12px var(--season-shadow)); }
+.summer-gelato-cone figcaption { text-align:center; margin-top:12px; font-size:10px; letter-spacing:2px; color:var(--c-text-3); }
+.summer-meadow-window { width:100%; overflow:hidden; margin-bottom:0; }
+.summer-meadow-window img { width:100%; height:clamp(280px,37vw,550px); object-fit:cover; object-position:center 57%; }
+.summer-meadow-window figcaption { position:relative; width:min(1224px,85%); margin:0 auto; background:none; padding:26px 0 40px; white-space:pre-line; font:400 16px/1.9 var(--font-heading); color:var(--c-text-2); }
+.autumn-leaf-passage { height:110px; width:min(1224px,85%); margin:10px auto 20px; overflow:hidden; }
+.autumn-scent { display:flex; align-items:center; gap:45px; width:min(630px,78%); margin:100px 10% 110px auto; border-left:1px solid var(--c-border); padding:20px 0 20px 45px; }
+.autumn-osmanthus { width:130px; height:200px; flex-shrink:0; }
+.autumn-scent h2 { font-size:clamp(29px,3.3vw,44px); }
+.winter-reading-nook { width:min(730px,85%); margin-left:7.5%; padding:64px 65px 80px; background:transparent; overflow:hidden; }
+.winter-reading-nook .season-moment-copy { padding-left:25px; border-left:2px solid var(--season-petal); }
+.winter-blanket-hem { position:absolute; left:0; right:0; bottom:0; height:34px; background:repeating-linear-gradient(90deg,var(--c-parchment) 0 5px,var(--c-surface) 5px 7px); border-block:5px solid var(--c-parchment); mask-image:linear-gradient(90deg,transparent,var(--c-text) 15%,var(--c-text) 85%,transparent); opacity:.55; }
 html[data-appearance="art"] [data-season-owned],html:not([data-appearance]) [data-season-owned] { display:none !important; }
-body.vocab-focus-mode .season-break { display:none; }
-body.season-page-hidden :is(.season-decoration,.season-object) *,body.season-page-hidden .season-decoration { animation-play-state:paused !important; }
+body.vocab-focus-mode :is(.season-moment,.autumn-leaf-passage) { display:none; }
+body.season-page-hidden .season-decoration * { animation-play-state:paused !important; }
 @keyframes season-sway { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(3deg)} }
-@keyframes season-petal { 0%,100%{transform:translate(0,0) rotate(-4deg)} 50%{transform:translate(4px,7px) rotate(12deg)} }
-@keyframes season-steam { 0%{transform:translateY(6px);opacity:.15} 45%{opacity:.7} 100%{transform:translateY(-10px);opacity:.15} }
-@keyframes season-wave { 0%,100%{transform:translateX(-14px)} 50%{transform:translateX(14px)} }
-@keyframes season-flame { 0%,100%{transform:scale(.96,1)} 50%{transform:scale(1.04,.94)} }
-@keyframes season-air { 0%,100%{transform:translateY(0);opacity:.55} 50%{transform:translateY(7px);opacity:1} }
-@media(min-width:800px) {
-  html[data-appearance]:not([data-appearance="art"]) .inner-intro :is(h1,p) { max-width:calc(100% - 270px); }
-}
-@media(max-width:1100px) {
-  .season-reader-mark { width:48px; right:10px; opacity:.75; }
-  .season-break { gap:24px; width:90%; }
-  .season-nav-sprig { left:calc(4.5% + 80px); width:75px; }
-}
+@keyframes season-petal { 0%,100%{translate:0 0;rotate:-4deg} 50%{translate:4px 7px;rotate:12deg} }
 @media(max-width:800px) {
-  .season-intro-art { position:relative; right:auto; bottom:auto; width:140px; height:105px; margin:18px 0 0 auto; }
-  html[data-appearance]:not([data-appearance="art"]) .inner-intro { padding-bottom:22px; }
-  .season-reader-mark { display:none; }
-  .season-break { grid-template-columns:1fr 1fr; gap:28px; margin-bottom:65px; }
-  .season-break-copy { grid-column:1/-1; max-width:none; }
-  .season-break-copy h2 { max-width:70%; }
-  .season-break-copy p { max-width:560px; }
+  .season-moment { width:88%; margin-top:45px; margin-bottom:65px; }
+  .spring-canopy { width:85px; left:30%; opacity:.4; }
+  .spring-garden { padding:25px 0 70px; grid-template-columns:.7fr 1fr; gap:24px; }
+  .spring-blossom-branch { width:130px; height:230px; }
+  .summer-gelato { grid-template-columns:1fr 190px; gap:22px; padding:25px 5px; }
+  .summer-gelato-cone img { height:270px; }
+  .summer-meadow-window { width:100%; margin-bottom:0; }
+  .autumn-scent { gap:25px; padding-left:25px; margin-right:6%; }
+  .autumn-osmanthus { width:100px; }
+  .winter-reading-nook { width:80%; margin-left:6%; padding:45px 30px 65px; }
 }
 @media(max-width:600px) {
-  .season-nav-sprig { left:42%; top:-10px; height:54px; width:74px; opacity:.6; }
-  .season-intro-art { width:120px; height:90px; margin-top:8px; }
-  .season-card-sprig { width:42px; height:52px; right:12px; top:12px; }
   html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card),html[data-appearance]:not([data-appearance="art"]) .utopia-site #personal-list .blog-card { padding:26px 22px; }
-  html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card) .card-meta { padding-right:35px; font-size:11px; }
+  html[data-appearance]:not([data-appearance="art"]) .utopia-site :is(.blog-card,.vocab-set-card) .card-meta { font-size:11px; }
   html[data-appearance]:not([data-appearance="art"]) .inner-intro p { font-size:13px; }
   html[data-appearance="winter"] .utopia-site .reader-overlay .custom-modal-content { border-radius:0; box-shadow:none; }
   html[data-appearance="autumn"] .utopia-site .reader-overlay .custom-modal-content { border-left:0; }
   html[data-appearance]:not([data-appearance="art"]) .utopia-site .footer-top nav { font-size:12px; }
   html[data-appearance]:not([data-appearance="art"]) .footer-bottom { font-size:10px; letter-spacing:0; }
-  .season-footer-scene { height:85px; margin-bottom:18px; }
-  .season-break { width:88%; gap:24px 18px; margin-bottom:50px; }
-  .season-break h2 { font-size:29px; max-width:none; }
-  .season-break p { font-size:12px; }
-  .season-vignette > .season-decoration { height:130px; }
-  .season-vignette figcaption { font-size:11px; }
-  .season-object { min-height:195px; }
-  .season-object>svg { height:105px; }
-  .season-object-toggle { padding:10px 11px; font-size:12px; gap:8px; }
-  .season-object p { font-size:10px; }
-  .season-break[data-season="winter"] { padding:25px 18px; }
-  .season-meadow > .season-icecream { width:38px; height:65px; right:-9px; bottom:25px; }
+  .season-moment p { font-size:13px; }
+  .season-moment h2 { font-size:27px; }
+  .spring-canopy { display:none; }
+  .spring-garden { gap:18px; grid-template-columns:75px 1fr; }
+  .spring-blossom-branch { width:75px; height:160px; transform:rotate(-18deg); }
+  .summer-gelato { grid-template-columns:1fr 105px; gap:10px; }
+  .summer-gelato h2 { font-size:24px; }
+  .summer-gelato p { font-size:12px; }
+  .summer-gelato-cone img { height:210px; }
+  .summer-gelato-cone figcaption { font-size:8px; letter-spacing:1px; line-height:1.8; }
+  .summer-meadow-window figcaption { width:88%; padding:20px 0 30px; font-size:14px; }
+  .autumn-leaf-passage { height:65px; }
+  .autumn-scent { gap:14px; padding-left:15px; }
+  .autumn-osmanthus { width:75px; height:160px; }
+  .winter-reading-nook { width:84%; padding:30px 20px 55px; border-radius:30px; }
+  .winter-reading-nook .season-moment-copy { padding-left:16px; }
 }
 @media(prefers-reduced-motion:reduce) {
-  .season-decoration,.season-decoration *,.season-object * { animation:none !important; transition:none !important; }
+  .season-decoration,.season-decoration * { animation:none !important; transition:none !important; }
 }
